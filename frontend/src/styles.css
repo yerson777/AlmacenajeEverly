@@ -1,0 +1,36 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-white text-gray-800 antialiased;
+  }
+
+  ::selection {
+    @apply bg-primary-100 text-primary-900;
+  }
+}
+
+@layer components {
+  .input-primary {
+    @apply w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200;
+  }
+
+  .estado-pendiente { @apply text-amber-600; }
+  .estado-entregada { @apply text-emerald-600; }
+
+  .badge-disponible { @apply bg-emerald-600 text-white; }
+  .badge-casi-lleno { @apply bg-yellow-400 text-yellow-950; }
+  .badge-lleno { @apply bg-red-600 text-white; }
+
+  .casillero-card { @apply cursor-pointer transition-transform duration-100; }
+  .casillero-card:hover { @apply -translate-y-0.5 shadow-lg; }
+
+  .posicion-cuadro {
+    @apply inline-flex h-[46px] w-[46px] items-center justify-center rounded-lg border border-gray-300 text-sm font-semibold;
+  }
+  .posicion-libre { @apply bg-gray-50 text-gray-500 border-gray-200; }
+  .posicion-ocupada { @apply bg-primary-600 text-white border-primary-600; }
+  .posicion-entregada { @apply bg-gray-100 text-gray-400 line-through border-gray-200; }
+}

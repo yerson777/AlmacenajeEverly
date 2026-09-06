@@ -1,0 +1,64 @@
+<div class="mb-6">
+  <div class="flex items-center gap-2">
+    <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-100 text-primary-700">
+      <i class="bi bi-clock-history"></i>
+    </span>
+    <div>
+      <h4 class="text-xl font-bold text-gray-900">Movimientos</h4>
+      <p class="text-sm text-gray-500">Historial de almacenamiento, movimientos y entregas</p>
+    </div>
+  </div>
+</div>
+
+@if (cargando) {
+  <div class="flex items-center justify-center py-16">
+    <span class="h-10 w-10 animate-spin rounded-full border-4 border-primary-200 border-t-primary-600"></span>
+  </div>
+}
+
+@if (!cargando && error) {
+  <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{{ error }}</div>
+}
+
+@if (!cargando && !error) {
+  <div class="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
+    <table class="w-full min-w-[720px] text-left text-sm">
+      <thead class="bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
+        <tr>
+          <th class="px-4 py-3 font-semibold">Fecha</th>
+          <th class="px-4 py-3 font-semibold">Bolsa</th>
+          <th class="px-4 py-3 font-semibold">Tipo</th>
+          <th class="px-4 py-3 font-semibold">Origen</th>
+          <th class="px-4 py-3 font-semibold">Destino</th>
+          <th class="px-4 py-3 font-semibold">Observaciones</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100 bg-white">
+        @for (m of movimientos; track m.id) {
+          <tr class="transition-colors hover:bg-primary-50">
+            <td class="px-4 py-3 text-gray-600">{{ m.fecha | date: 'dd/MM/yyyy HH:mm' }}</td>
+            <td class="px-4 py-3"><code class="rounded bg-gray-100 px-1.5 py-0.5 text-xs font-medium text-gray-700">{{ m.bolsa?.codigo }}</code></td>
+            <td class="px-4 py-3">
+              <span
+                class="inline-block rounded-full px-2.5 py-0.5 text-xs font-medium"
+                [class.bg-sky-100]="m.tipo === 'Almacenada'"
+                [class.text-sky-700]="m.tipo === 'Almacenada'"
+                [class.bg-amber-100]="m.tipo === 'Movida'"
+                [class.text-amber-700]="m.tipo === 'Movida'"
+                [class.bg-emerald-100]="m.tipo === 'Entregada'"
+                [class.text-emerald-700]="m.tipo === 'Entregada'"
+              >{{ m.tipo }}</span>
+            </td>
+            <td class="px-4 py-3 font-mono text-gray-600">{{ origen(m) }}</td>
+            <td class="px-4 py-3 font-mono text-gray-600">{{ destino(m) }}</td>
+            <td class="px-4 py-3 text-gray-600">{{ m.observaciones || '—' }}</td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="6" class="px-4 py-8 text-center text-gray-400">No hay movimientos registrados.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}

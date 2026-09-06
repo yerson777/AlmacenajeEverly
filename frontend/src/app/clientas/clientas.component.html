@@ -1,0 +1,228 @@
+<div class="mb-6">
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <div class="flex items-center gap-2">
+      <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-100 text-primary-700">
+        <i class="bi bi-people"></i>
+      </span>
+      <div>
+        <h4 class="text-xl font-bold text-gray-900">Clientas</h4>
+        <p class="text-sm text-gray-500">Registro y consulta de clientas</p>
+      </div>
+    </div>
+    <button
+      class="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-300"
+      (click)="abrirCrear()"
+    >
+      <i class="bi bi-plus-lg"></i> Nueva clienta
+    </button>
+  </div>
+</div>
+
+@if (error) {
+  <div class="mb-3 flex items-center justify-between gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+    <span>{{ error }}</span>
+    <button class="rounded-md px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-100" (click)="error = ''">Cerrar</button>
+  </div>
+}
+@if (mensaje) {
+  <div class="mb-3 flex items-center justify-between gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+    <span>{{ mensaje }}</span>
+    <button class="rounded-md px-2 py-1 text-xs font-medium text-emerald-600 hover:bg-emerald-100" (click)="mensaje = ''">Cerrar</button>
+  </div>
+}
+
+<div class="mb-4 flex max-w-xl gap-2">
+  <input
+    class="input-primary"
+    [(ngModel)]="q"
+    (keyup.enter)="buscar()"
+    placeholder="Buscar por nombre o teléfono…"
+  />
+  <button class="inline-flex items-center justify-center rounded-lg border border-primary-300 px-3 text-primary-600 transition-colors hover:bg-primary-50" (click)="buscar()">
+    <i class="bi bi-search"></i>
+  </button>
+</div>
+
+<div class="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
+  <table class="w-full min-w-[640px] text-left text-sm">
+    <thead class="bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
+      <tr>
+        <th class="px-4 py-3 font-semibold">Nombre</th>
+        <th class="px-4 py-3 font-semibold">Teléfono</th>
+        <th class="px-4 py-3 font-semibold">Correo</th>
+        <th class="px-4 py-3 font-semibold">Pedidos</th>
+        <th class="px-4 py-3 text-right font-semibold">Acciones</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-gray-100 bg-white">
+      @for (c of clientas; track c.id) {
+        <tr class="transition-colors hover:bg-primary-50">
+          <td class="px-4 py-3 font-semibold text-gray-800">{{ c.nombre }}</td>
+          <td class="px-4 py-3 text-gray-600">{{ c.telefono || '—' }}</td>
+          <td class="px-4 py-3 text-gray-600">{{ c.email || '—' }}</td>
+          <td class="px-4 py-3"><span class="inline-block rounded-full bg-gray-200 px-2.5 py-0.5 text-xs font-medium text-gray-700">{{ c.pedidos_count ?? 0 }}</span></td>
+          <td class="px-4 py-3 text-right">
+            <div class="flex items-center justify-end gap-1.5">
+              <button
+                class="inline-flex h-8 items-center gap-1 rounded-lg border border-primary-300 px-2.5 text-xs font-medium text-primary-600 transition-colors hover:bg-primary-50"
+                (click)="verDetalle(c)"
+              >
+                <i class="bi bi-eye"></i> Ver
+              </button>
+              <button
+                class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-300 text-gray-600 transition-colors hover:bg-gray-50"
+                (click)="abrirEditar(c)"
+                title="Editar"
+              >
+                <i class="bi bi-pencil"></i>
+              </button>
+              <button
+                class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-red-300 text-red-600 transition-colors hover:bg-red-50"
+                (click)="eliminar(c)"
+                title="Eliminar"
+              >
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+      } @empty {
+        <tr>
+          <td colspan="5" class="px-4 py-8 text-center text-gray-400">No hay clientas registradas.</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>
+
+<!-- Detalle -->
+@if (detalle) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+    <div class="w-full max-w-2xl rounded-xl bg-white shadow-xl">
+      <div class="flex items-center justify-between border-b border-gray-200 px-5 py-4">
+        <h5 class="text-base font-bold text-gray-900">{{ detalle.nombre }}</h5>
+        <button class="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600" (click)="detalle = null">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+      <div class="p-5 text-sm">
+        <p class="mb-2"><strong class="text-gray-700">Teléfono:</strong> {{ detalle.telefono || '—' }}</p>
+        <p class="mb-2"><strong class="text-gray-700">Correo:</strong> {{ detalle.email || '—' }}</p>
+        <p class="mb-4"><strong class="text-gray-700">Dirección:</strong> {{ detalle.direccion || '—' }}</p>
+
+        <h6 class="mb-3 text-sm font-semibold text-gray-800">Pedidos</h6>
+        @if (detalle.pedidos && detalle.pedidos.length > 0) {
+          <div class="mb-5 overflow-x-auto rounded-lg border border-gray-200">
+            <table class="w-full text-left text-sm">
+              <thead class="bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
+                <tr>
+                  <th class="px-3 py-2 font-semibold">Código</th>
+                  <th class="px-3 py-2 font-semibold">Fecha</th>
+                  <th class="px-3 py-2 font-semibold">Total</th>
+                  <th class="px-3 py-2 font-semibold">Estado</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100">
+                @for (p of detalle.pedidos; track p.id) {
+                  <tr>
+                    <td class="px-3 py-2 text-gray-600">{{ p.codigo }}</td>
+                    <td class="px-3 py-2 text-gray-600">{{ p.fecha }}</td>
+                    <td class="px-3 py-2 font-medium text-gray-800">{{ p.total ? 'Bs ' + p.total : '—' }}</td>
+                    <td class="px-3 py-2 text-gray-600">{{ p.estado }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        } @else {
+          <p class="mb-5 text-sm text-gray-400">Sin pedidos registrados.</p>
+        }
+
+        <h6 class="mb-3 text-sm font-semibold text-gray-800">Bolsas</h6>
+        @if (detalle.bolsas && detalle.bolsas.length > 0) {
+          <div class="overflow-x-auto rounded-lg border border-gray-200">
+            <table class="w-full text-left text-sm">
+              <thead class="bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
+                <tr>
+                  <th class="px-3 py-2 font-semibold">Código</th>
+                  <th class="px-3 py-2 font-semibold">Ubicación</th>
+                  <th class="px-3 py-2 font-semibold">Estado</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100">
+                @for (b of detalle.bolsas; track b.id) {
+                  <tr>
+                    <td class="px-3 py-2"><code class="rounded bg-gray-100 px-1.5 py-0.5 text-xs font-medium text-gray-700">{{ b.codigo }}</code></td>
+                    <td class="px-3 py-2 text-gray-600">
+                      @if (b.casillero && b.posicion != null && b.estado !== 'Entregada') {
+                        {{ b.casillero.codigo }} / {{ pad(b.posicion!) }}
+                      } @else {
+                        <span class="text-gray-400">Liberada</span>
+                      }
+                    </td>
+                    <td class="px-3 py-2 text-gray-600">{{ b.estado }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        } @else {
+          <p class="text-sm text-gray-400">Sin bolsas registradas.</p>
+        }
+      </div>
+      <div class="flex justify-end border-t border-gray-200 px-5 py-4">
+        <button
+          class="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-200"
+          (click)="detalle = null"
+        >Cerrar</button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal crear/editar -->
+@if (mostrarModal) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+    <div class="w-full max-w-lg rounded-xl bg-white shadow-xl">
+      <div class="border-b border-gray-200 px-5 py-4">
+        <h5 class="text-base font-bold text-gray-900">{{ editando ? 'Editar clienta' : 'Nueva clienta' }}</h5>
+      </div>
+      <div class="space-y-4 p-5">
+        @if (error) {
+          <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{{ error }}</div>
+        }
+        <div>
+          <label class="mb-1 block text-sm font-medium text-gray-700">Nombre *</label>
+          <input class="input-primary" [(ngModel)]="formNombre" />
+        </div>
+        <div>
+          <label class="mb-1 block text-sm font-medium text-gray-700">Teléfono</label>
+          <input class="input-primary" [(ngModel)]="formTelefono" />
+        </div>
+        <div>
+          <label class="mb-1 block text-sm font-medium text-gray-700">Correo</label>
+          <input class="input-primary" [(ngModel)]="formEmail" />
+        </div>
+        <div>
+          <label class="mb-1 block text-sm font-medium text-gray-700">Dirección</label>
+          <input class="input-primary" [(ngModel)]="formDireccion" />
+        </div>
+        <div>
+          <label class="mb-1 block text-sm font-medium text-gray-700">Notas</label>
+          <textarea class="input-primary" rows="2" [(ngModel)]="formNotas"></textarea>
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 border-t border-gray-200 px-5 py-4">
+        <button
+          class="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-200"
+          (click)="mostrarModal = false"
+        >Cancelar</button>
+        <button
+          class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-60"
+          (click)="guardar()"
+          [disabled]="!formNombre.trim()"
+        >Guardar</button>
+      </div>
+    </div>
+  </div>
+}

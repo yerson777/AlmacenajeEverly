@@ -1,0 +1,12 @@
+.nav-link {
+  @apply rounded-lg px-3 py-1.5 text-sm font-medium text-white/90 transition-colors;
+}
+.nav-link:hover {
+  @apply bg-white/15 text-white;
+}
+.active {
+  @apply bg-white font-semibold text-primary-700 shadow-sm;
+}
+.active:hover {
+  @apply bg-white text-primary-800;
+}

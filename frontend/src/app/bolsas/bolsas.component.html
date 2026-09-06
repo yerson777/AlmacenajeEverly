@@ -1,0 +1,336 @@
+<div class="mb-6">
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <div class="flex items-center gap-2">
+      <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-100 text-primary-700">
+        <i class="bi bi-bag"></i>
+      </span>
+      <div>
+        <h4 class="text-xl font-bold text-gray-900">Bolsas</h4>
+        <p class="text-sm text-gray-500">Registro, ubicación y entrega de bolsas</p>
+      </div>
+    </div>
+    <button
+      class="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-300"
+      (click)="abrirRegistrar()"
+    >
+      <i class="bi bi-plus-lg"></i> Registrar bolsa
+    </button>
+  </div>
+</div>
+
+@if (error) {
+  <div class="mb-3 flex items-center justify-between gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+    <span>{{ error }}</span>
+    <button class="rounded-md px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-100" (click)="error = ''">Cerrar</button>
+  </div>
+}
+@if (mensaje) {
+  <div class="mb-3 flex items-center justify-between gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+    <span>{{ mensaje }}</span>
+    <button class="rounded-md px-2 py-1 text-xs font-medium text-emerald-600 hover:bg-emerald-100" (click)="mensaje = ''">Cerrar</button>
+  </div>
+}
+
+<div class="mb-4 flex max-w-xl gap-2">
+  <input
+    class="input-primary"
+    [(ngModel)]="q"
+    (keyup.enter)="buscar()"
+    placeholder="Buscar por código, clienta, teléfono o pedido…"
+  />
+  <button class="inline-flex items-center justify-center rounded-lg border border-primary-300 px-3 text-primary-600 transition-colors hover:bg-primary-50" (click)="buscar()">
+    <i class="bi bi-search"></i>
+  </button>
+</div>
+
+<div class="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
+  <table class="w-full min-w-[720px] text-left text-sm">
+    <thead class="bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
+      <tr>
+        <th class="px-4 py-3 font-semibold">Bolsa</th>
+        <th class="px-4 py-3 font-semibold">Clienta</th>
+        <th class="px-4 py-3 font-semibold">Pedido</th>
+        <th class="px-4 py-3 font-semibold">📍 Ubicación</th>
+        <th class="px-4 py-3 font-semibold">Fecha almacenamiento</th>
+        <th class="px-4 py-3 font-semibold">Estado</th>
+        <th class="px-4 py-3 text-right font-semibold">Acciones</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-gray-100 bg-white">
+      @for (b of bolsas; track b.id) {
+        <tr class="transition-colors hover:bg-primary-50">
+          <td class="px-4 py-3"><code class="rounded bg-gray-100 px-1.5 py-0.5 text-xs font-medium text-gray-700">{{ b.codigo }}</code></td>
+          <td class="px-4 py-3 font-semibold text-gray-800">{{ b.clienta?.nombre }}</td>
+          <td class="px-4 py-3 text-gray-600">{{ b.pedido?.codigo }}</td>
+          <td class="px-4 py-3">
+            @if (b.estado !== 'Entregada' && b.casillero && b.posicion != null) {
+              <span class="inline-block rounded-full bg-primary-600 px-2.5 py-0.5 text-xs font-medium text-white">{{ ubicacion(b) }}</span>
+            } @else {
+              <span class="text-gray-400">Liberada</span>
+            }
+          </td>
+          <td class="px-4 py-3 text-gray-600">{{ b.fecha_almacenamiento }}</td>
+          <td class="px-4 py-3">
+            <span
+              class="inline-block rounded-full px-2.5 py-0.5 text-xs font-medium"
+              [class.bg-amber-100]="b.estado === 'Pendiente de entrega'"
+              [class.text-amber-700]="b.estado === 'Pendiente de entrega'"
+              [class.bg-emerald-100]="b.estado === 'Entregada'"
+              [class.text-emerald-700]="b.estado === 'Entregada'"
+            >{{ b.estado }}</span>
+          </td>
+          <td class="px-4 py-3 text-right">
+            <div class="flex items-center justify-end gap-1.5">
+              <button
+                class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-primary-300 text-primary-600 transition-colors hover:bg-primary-50"
+                (click)="verDetalle(b)"
+                title="Ver detalle"
+              >
+                <i class="bi bi-eye"></i>
+              </button>
+              @if (b.estado === 'Pendiente de entrega' && b.casillero && b.posicion != null) {
+                <button
+                  class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-300 text-gray-600 transition-colors hover:bg-gray-50"
+                  (click)="abrirMover(b)"
+                  title="Mover de casillero"
+                >
+                  <i class="bi bi-arrows-move"></i>
+                </button>
+                <button
+                  class="inline-flex h-8 items-center gap-1 rounded-lg bg-emerald-600 px-2.5 text-xs font-semibold text-white transition-colors hover:bg-emerald-700"
+                  (click)="entregar(b)"
+                >
+                  <i class="bi bi-check-lg"></i> Entregar
+                </button>
+              }
+              <button
+                class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-red-300 text-red-600 transition-colors hover:bg-red-50"
+                (click)="eliminar(b)"
+                title="Eliminar"
+              >
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+      } @empty {
+        <tr>
+          <td colspan="7" class="px-4 py-8 text-center text-gray-400">No hay bolsas registradas.</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>
+
+<!-- Detalle -->
+@if (detalle) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+    <div class="w-full max-w-2xl rounded-xl bg-white shadow-xl">
+      <div class="flex items-center justify-between border-b border-gray-200 px-5 py-4">
+        <h5 class="text-base font-bold text-gray-900">Bolsa <code class="rounded bg-primary-50 px-1.5 py-0.5 text-primary-700">{{ detalle.codigo }}</code></h5>
+        <button class="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600" (click)="detalle = null">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+      <div class="p-5 text-sm">
+        <p class="mb-2"><strong class="text-gray-700">Clienta:</strong> {{ detalle.clienta?.nombre }}</p>
+        <p class="mb-2"><strong class="text-gray-700">Pedido:</strong> {{ detalle.pedido?.codigo }}</p>
+        <p class="mb-2">
+          <strong class="text-gray-700">📍 Ubicación:</strong>
+          @if (detalle.casillero && detalle.posicion != null && detalle.estado !== 'Entregada') {
+            {{ detalle.casillero.codigo }} / {{ pad(detalle.posicion!) }}
+          } @else {
+            <span class="text-gray-400">Liberada</span>
+          }
+        </p>
+        <p class="mb-2"><strong class="text-gray-700">Fecha almacenamiento:</strong> {{ detalle.fecha_almacenamiento }}</p>
+        <p class="mb-2"><strong class="text-gray-700">Estado:</strong> {{ detalle.estado }}</p>
+        <p class="mb-4"><strong class="text-gray-700">Observaciones:</strong> {{ detalle.observaciones || '—' }}</p>
+
+        <h6 class="mb-3 text-sm font-semibold text-gray-800">Historial de movimientos</h6>
+        @if (detalle.movimientos && detalle.movimientos.length > 0) {
+          <div class="overflow-x-auto rounded-lg border border-gray-200">
+            <table class="w-full text-left text-sm">
+              <thead class="bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
+                <tr>
+                  <th class="px-3 py-2 font-semibold">Fecha</th>
+                  <th class="px-3 py-2 font-semibold">Tipo</th>
+                  <th class="px-3 py-2 font-semibold">Origen</th>
+                  <th class="px-3 py-2 font-semibold">Destino</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100">
+                @for (m of detalle.movimientos; track m.id) {
+                  <tr>
+                    <td class="px-3 py-2 text-gray-600">{{ m.fecha | date: 'dd/MM/yyyy HH:mm' }}</td>
+                    <td class="px-3 py-2"><span class="inline-block rounded-full bg-gray-200 px-2 py-0.5 text-xs font-medium text-gray-700">{{ m.tipo }}</span></td>
+                    <td class="px-3 py-2 text-gray-600">
+                      @if (m.casillero_origen) {
+                        {{ m.casillero_origen.codigo }} / {{ pad(m.posicion_origen!) }}
+                      } @else { — }
+                    </td>
+                    <td class="px-3 py-2 text-gray-600">
+                      @if (m.casillero_destino) {
+                        {{ m.casillero_destino.codigo }} / {{ pad(m.posicion_destino!) }}
+                      } @else { — }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        } @else {
+          <p class="text-sm text-gray-400">Sin movimientos registrados.</p>
+        }
+      </div>
+      <div class="flex justify-end border-t border-gray-200 px-5 py-4">
+        <button
+          class="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-200"
+          (click)="detalle = null"
+        >Cerrar</button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal registrar -->
+@if (mostrarModalRegistrar) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+    <div class="w-full max-w-2xl rounded-xl bg-white shadow-xl">
+      <div class="border-b border-gray-200 px-5 py-4">
+        <h5 class="text-base font-bold text-gray-900">Registrar bolsa</h5>
+      </div>
+      <div class="space-y-4 p-5">
+        @if (error) {
+          <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{{ error }}</div>
+        }
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <label class="mb-1 block text-sm font-medium text-gray-700">Clienta *</label>
+            <select class="input-primary" [(ngModel)]="formClientaId" (ngModelChange)="onClientaCambio()">
+              <option [ngValue]="null" disabled>Seleccione una clienta…</option>
+              @for (c of clientas; track c.id) {
+                <option [ngValue]="c.id">{{ c.nombre }}</option>
+              }
+            </select>
+          </div>
+          <div>
+            <label class="mb-1 block text-sm font-medium text-gray-700">Pedido *</label>
+            <select class="input-primary" [(ngModel)]="formPedidoId" [disabled]="!formClientaId">
+              <option [ngValue]="null" disabled>{{ formClientaId ? 'Seleccione un pedido…' : 'Primero elija la clienta' }}</option>
+              @for (p of pedidos; track p.id) {
+                <option [ngValue]="p.id">{{ p.codigo }}</option>
+              }
+            </select>
+          </div>
+        </div>
+
+        <label class="flex cursor-pointer items-center gap-2 text-sm text-gray-700">
+          <input class="h-4 w-4 rounded border-gray-300 accent-primary-600" type="checkbox" id="autoCodigo" [(ngModel)]="autoCodigo" />
+          Generar código automáticamente
+        </label>
+        @if (!autoCodigo) {
+          <div>
+            <label class="mb-1 block text-sm font-medium text-gray-700">Código de bolsa</label>
+            <input class="input-primary" [(ngModel)]="formCodigo" placeholder="Ej: VB-125" />
+          </div>
+        }
+
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <label class="mb-1 block text-sm font-medium text-gray-700">Casillero *</label>
+            <select class="input-primary" [(ngModel)]="formCasilleroId">
+              <option [ngValue]="null" disabled>Seleccione un casillero…</option>
+              @for (c of casilleros; track c.id) {
+                <option [ngValue]="c.id">
+                  {{ c.codigo }} ({{ c.bolsas_activas }}/{{ c.capacidad }})
+                </option>
+              }
+            </select>
+          </div>
+          <div>
+            <label class="mb-1 block text-sm font-medium text-gray-700">Posición (vacío = automática, 1-{{ casilleroCapacidad() }})</label>
+            <input class="input-primary" type="number" min="1" [max]="casilleroCapacidad()" [(ngModel)]="formPosicion" placeholder="Automática" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <label class="mb-1 block text-sm font-medium text-gray-700">Fecha de almacenamiento</label>
+            <input class="input-primary" type="date" [(ngModel)]="formFecha" />
+          </div>
+          <div>
+            <label class="mb-1 block text-sm font-medium text-gray-700">Estado</label>
+            <select class="input-primary" [(ngModel)]="formEstado">
+              <option value="Pendiente de entrega">Pendiente de entrega</option>
+              <option value="Entregada">Entregada</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="mb-1 block text-sm font-medium text-gray-700">Observaciones</label>
+          <textarea class="input-primary" rows="2" [(ngModel)]="formObservaciones"></textarea>
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 border-t border-gray-200 px-5 py-4">
+        <button
+          class="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-200"
+          (click)="mostrarModalRegistrar = false"
+        >Cancelar</button>
+        <button
+          class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-60"
+          (click)="registrar()"
+          [disabled]="!formClientaId || !formPedidoId || !formCasilleroId"
+        >Guardar</button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal mover -->
+@if (mostrarModalMover && moverBolsa) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+    <div class="w-full max-w-lg rounded-xl bg-white shadow-xl">
+      <div class="border-b border-gray-200 px-5 py-4">
+        <h5 class="text-base font-bold text-gray-900">Mover bolsa {{ moverBolsa.codigo }}</h5>
+      </div>
+      <div class="space-y-4 p-5">
+        @if (error) {
+          <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{{ error }}</div>
+        }
+        <p class="text-sm text-gray-500">
+          Ubicación actual:
+          @if (moverBolsa.casillero && moverBolsa.posicion != null) {
+            <span class="ml-1 inline-block rounded-full bg-primary-600 px-2.5 py-0.5 text-xs font-medium text-white">{{ moverBolsa.casillero.codigo }} / {{ pad(moverBolsa.posicion!) }}</span>
+          }
+        </p>
+        <div>
+          <label class="mb-1 block text-sm font-medium text-gray-700">Casillero de destino *</label>
+          <select class="input-primary" [(ngModel)]="moverCasilleroId">
+            <option [ngValue]="null" disabled>Seleccione un casillero…</option>
+            @for (c of casilleros; track c.id) {
+              <option [ngValue]="c.id">
+                {{ c.codigo }} ({{ c.bolsas_activas }}/{{ c.capacidad }})
+              </option>
+            }
+          </select>
+        </div>
+        <div>
+          <label class="mb-1 block text-sm font-medium text-gray-700">Posición (vacío = automática)</label>
+          <input class="input-primary" type="number" min="1" [(ngModel)]="moverPosicion" placeholder="Automática" />
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 border-t border-gray-200 px-5 py-4">
+        <button
+          class="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-200"
+          (click)="mostrarModalMover = false"
+        >Cancelar</button>
+        <button
+          class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-700"
+          (click)="mover()"
+        >Mover</button>
+      </div>
+    </div>
+  </div>
+}

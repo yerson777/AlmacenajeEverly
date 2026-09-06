@@ -1,0 +1,163 @@
+<div class="mb-6">
+  <div class="flex items-center gap-2">
+    <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-100 text-primary-700">
+      <i class="bi bi-house-door"></i>
+    </span>
+    <div>
+      <h4 class="text-xl font-bold text-gray-900">Panel de control</h4>
+      <p class="text-sm text-gray-500">Estados del almacén de Vest Fashion</p>
+    </div>
+  </div>
+</div>
+
+@if (error && !stats) {
+  <div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+    {{ error }}
+  </div>
+}
+
+<div class="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+  <div class="rounded-xl border border-gray-200 bg-white p-4 text-center shadow-sm">
+    <div class="text-2xl font-bold text-primary-600">{{ stats?.total_clientas ?? '—' }}</div>
+    <div class="mt-1 text-xs text-gray-500">Clientas registradas</div>
+  </div>
+  <div class="rounded-xl border border-gray-200 bg-white p-4 text-center shadow-sm">
+    <div class="text-2xl font-bold text-primary-600">{{ stats?.bolsas_almacenadas ?? '—' }}</div>
+    <div class="mt-1 text-xs text-gray-500">Bolsas almacenadas</div>
+  </div>
+  <div class="rounded-xl border border-gray-200 bg-white p-4 text-center shadow-sm">
+    <div class="estado-pendiente text-2xl font-bold">{{ stats?.bolsas_pendientes ?? '—' }}</div>
+    <div class="mt-1 text-xs text-gray-500">Pendientes de entrega</div>
+  </div>
+  <div class="rounded-xl border border-gray-200 bg-white p-4 text-center shadow-sm">
+    <div class="estado-entregada text-2xl font-bold">{{ stats?.bolsas_entregadas ?? '—' }}</div>
+    <div class="mt-1 text-xs text-gray-500">Entregadas</div>
+  </div>
+  <div class="rounded-xl border border-gray-200 bg-white p-4 text-center shadow-sm">
+    <div class="text-2xl font-bold text-emerald-600">
+      {{ (stats?.casilleros_disponibles ?? 0) + (stats?.casilleros_llenos ?? 0) }}
+    </div>
+    <div class="mt-1 text-xs text-gray-500">Casilleros ({{ stats?.casilleros_llenos ?? 0 }} llenos)</div>
+  </div>
+  <div class="rounded-xl border border-gray-200 bg-white p-4 text-center shadow-sm">
+    <div class="text-2xl font-bold text-sky-600">{{ stats?.espacios_disponibles ?? '—' }}</div>
+    <div class="mt-1 text-xs text-gray-500">Espacios disponibles</div>
+  </div>
+</div>
+
+<!-- Búsqueda rápida -->
+<div class="mb-6 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+  <h5 class="mb-3 flex items-center gap-2 text-base font-semibold text-gray-900">
+    <i class="bi bi-search text-primary-600"></i> ¿Dónde está la bolsa de esta clienta?
+  </h5>
+  <div class="flex gap-2">
+    <input
+      class="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200"
+      type="text"
+      [(ngModel)]="q"
+      (keyup.enter)="onBuscar()"
+      placeholder="Buscar por nombre, teléfono, código de bolsa o pedido…"
+    />
+    <button
+      class="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-300 disabled:cursor-not-allowed disabled:opacity-60"
+      (click)="onBuscar()"
+      [disabled]="buscando"
+    >
+      @if (buscando) {
+        <span class="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white"></span>
+      }
+      Buscar
+    </button>
+  </div>
+
+  @if (error) {
+    <div class="mt-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{{ error }}</div>
+  }
+  @if (mensaje) {
+    <div class="mt-3 rounded-lg border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-700">{{ mensaje }}</div>
+  }
+  @if (resultados.length > 0) {
+    <div class="mt-5">
+      <h6 class="mb-3 text-sm font-semibold text-gray-700">Resultados ({{ resultados.length }})</h6>
+      <div class="overflow-x-auto rounded-lg border border-gray-200">
+        <table class="w-full min-w-[640px] text-left text-sm">
+          <thead class="bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
+            <tr>
+              <th class="px-4 py-3 font-semibold">Clienta</th>
+              <th class="px-4 py-3 font-semibold">Pedido</th>
+              <th class="px-4 py-3 font-semibold">Bolsa</th>
+              <th class="px-4 py-3 font-semibold">📍 Ubicación</th>
+              <th class="px-4 py-3 font-semibold">Estado</th>
+              <th class="px-4 py-3 font-semibold">Teléfono</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100 bg-white">
+            @for (b of resultados; track b.id) {
+              <tr class="transition-colors hover:bg-primary-50">
+                <td class="px-4 py-3 font-semibold text-gray-800">{{ b.clienta?.nombre }}</td>
+                <td class="px-4 py-3 text-gray-600">{{ b.pedido?.codigo }}</td>
+                <td class="px-4 py-3"><code class="rounded bg-gray-100 px-1.5 py-0.5 text-xs font-medium text-gray-700">{{ b.codigo }}</code></td>
+                <td class="px-4 py-3">
+                  @if (b.casillero && b.posicion != null && b.estado !== 'Entregada') {
+                    <span class="inline-block rounded-full bg-primary-600 px-2.5 py-0.5 text-xs font-medium text-white">{{ casilleroLabel(b) }}</span>
+                  } @else {
+                    <span class="text-gray-400">Liberada</span>
+                  }
+                </td>
+                <td class="px-4 py-3">
+                  <span
+                    class="inline-block rounded-full px-2.5 py-0.5 text-xs font-medium"
+                    [class.bg-amber-100]="b.estado === 'Pendiente de entrega'"
+                    [class.text-amber-700]="b.estado === 'Pendiente de entrega'"
+                    [class.bg-emerald-100]="b.estado === 'Entregada'"
+                    [class.text-emerald-700]="b.estado === 'Entregada'"
+                  >{{ b.estado }}</span>
+                </td>
+                <td class="px-4 py-3 text-gray-600">{{ b.clienta?.telefono || '—' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+</div>
+
+<!-- Pendientes de entrega -->
+<div class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+  <div class="border-b border-gray-200 bg-white px-5 py-4">
+    <h6 class="flex items-center gap-2 text-base font-semibold text-gray-900">
+      <i class="bi bi-clock-history text-primary-600"></i> Bolsas pendientes de entrega y su ubicación
+    </h6>
+  </div>
+  @if (pendientes.length === 0) {
+    <p class="px-5 py-4 text-sm text-gray-500">No hay bolsas pendientes de entrega.</p>
+  } @else {
+    <div class="overflow-x-auto">
+      <table class="w-full min-w-[640px] text-left text-sm">
+        <thead class="bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
+          <tr>
+            <th class="px-5 py-3 font-semibold">Clienta</th>
+            <th class="px-5 py-3 font-semibold">Pedido</th>
+            <th class="px-5 py-3 font-semibold">Bolsa</th>
+            <th class="px-5 py-3 font-semibold">📍 Casillero</th>
+            <th class="px-5 py-3 font-semibold">🔢 Posición</th>
+            <th class="px-5 py-3 font-semibold">Fecha almacenamiento</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100 bg-white">
+          @for (b of pendientes; track b.id) {
+            <tr class="transition-colors hover:bg-primary-50">
+              <td class="px-5 py-3 font-semibold text-gray-800">{{ b.clienta?.nombre }}</td>
+              <td class="px-5 py-3 text-gray-600">{{ b.pedido?.codigo }}</td>
+              <td class="px-5 py-3"><code class="rounded bg-gray-100 px-1.5 py-0.5 text-xs font-medium text-gray-700">{{ b.codigo }}</code></td>
+              <td class="px-5 py-3"><span class="inline-block rounded-full bg-primary-600 px-2.5 py-0.5 text-xs font-medium text-white">{{ b.casillero?.codigo }}</span></td>
+              <td class="px-5 py-3 font-mono text-gray-700">{{ pad(b.posicion!) }}</td>
+              <td class="px-5 py-3 text-gray-600">{{ b.fecha_almacenamiento }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>
