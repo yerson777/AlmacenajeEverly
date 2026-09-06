@@ -10,4 +10,17 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 })
 export class AppComponent {
   title = 'CasilleroEverly';
+  menuAbierto = false;
+  navItems = [
+    { label: 'Inicio', route: '/dashboard' },
+    { label: 'Casilleros', route: '/casilleros' },
+    { label: 'Bolsas', route: '/bolsas' },
+    { label: 'Clientas', route: '/clientas' },
+    { label: 'Pedidos', route: '/pedidos' },
+    { label: 'Movimientos', route: '/movimientos' },
+  ];
+
+  cerrarMenu(): void {
+    this.menuAbierto = false;
+  }
 }

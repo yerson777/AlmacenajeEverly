@@ -5,7 +5,7 @@
     </span>
     <div>
       <h4 class="text-xl font-bold text-gray-900">Panel de control</h4>
-      <p class="text-sm text-gray-500">Estados del almacén de Vest Fashion</p>
+      <p class="text-sm text-gray-500">Estados del almacén de Everly</p>
     </div>
   </div>
 </div>
@@ -16,34 +16,168 @@
   </div>
 }
 
+<!-- KPIs -->
 <div class="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-  <div class="rounded-xl border border-gray-200 bg-white p-4 text-center shadow-sm">
-    <div class="text-2xl font-bold text-primary-600">{{ stats?.total_clientas ?? '—' }}</div>
-    <div class="mt-1 text-xs text-gray-500">Clientas registradas</div>
-  </div>
-  <div class="rounded-xl border border-gray-200 bg-white p-4 text-center shadow-sm">
-    <div class="text-2xl font-bold text-primary-600">{{ stats?.bolsas_almacenadas ?? '—' }}</div>
-    <div class="mt-1 text-xs text-gray-500">Bolsas almacenadas</div>
-  </div>
-  <div class="rounded-xl border border-gray-200 bg-white p-4 text-center shadow-sm">
-    <div class="estado-pendiente text-2xl font-bold">{{ stats?.bolsas_pendientes ?? '—' }}</div>
-    <div class="mt-1 text-xs text-gray-500">Pendientes de entrega</div>
-  </div>
-  <div class="rounded-xl border border-gray-200 bg-white p-4 text-center shadow-sm">
-    <div class="estado-entregada text-2xl font-bold">{{ stats?.bolsas_entregadas ?? '—' }}</div>
-    <div class="mt-1 text-xs text-gray-500">Entregadas</div>
-  </div>
-  <div class="rounded-xl border border-gray-200 bg-white p-4 text-center shadow-sm">
-    <div class="text-2xl font-bold text-emerald-600">
-      {{ (stats?.casilleros_disponibles ?? 0) + (stats?.casilleros_llenos ?? 0) }}
+  <div class="relative overflow-hidden rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+    <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-fuchsia-500 to-purple-500"></div>
+    <div class="flex items-center justify-between gap-2">
+      <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-fuchsia-100 text-fuchsia-700"><i class="bi bi-people"></i></span>
+      <span class="text-2xl font-bold tracking-tight text-gray-900">{{ stats?.total_clientas ?? '—' }}</span>
     </div>
-    <div class="mt-1 text-xs text-gray-500">Casilleros ({{ stats?.casilleros_llenos ?? 0 }} llenos)</div>
+    <div class="mt-2 text-xs font-medium text-gray-500">Clientas registradas</div>
   </div>
-  <div class="rounded-xl border border-gray-200 bg-white p-4 text-center shadow-sm">
-    <div class="text-2xl font-bold text-sky-600">{{ stats?.espacios_disponibles ?? '—' }}</div>
-    <div class="mt-1 text-xs text-gray-500">Espacios disponibles</div>
+  <div class="relative overflow-hidden rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+    <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-violet-500 to-fuchsia-500"></div>
+    <div class="flex items-center justify-between gap-2">
+      <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-100 text-violet-700"><i class="bi bi-box-seam"></i></span>
+      <span class="text-2xl font-bold tracking-tight text-gray-900">{{ stats?.bolsas_almacenadas ?? '—' }}</span>
+    </div>
+    <div class="mt-2 text-xs font-medium text-gray-500">Bolsas almacenadas</div>
+  </div>
+  <div class="relative overflow-hidden rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+    <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-amber-500 to-orange-500"></div>
+    <div class="flex items-center justify-between gap-2">
+      <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-100 text-amber-700"><i class="bi bi-clock-history"></i></span>
+      <span class="text-2xl font-bold tracking-tight text-amber-600">{{ stats?.bolsas_pendientes ?? '—' }}</span>
+    </div>
+    <div class="mt-2 text-xs font-medium text-gray-500">Pendientes de entrega</div>
+  </div>
+  <div class="relative overflow-hidden rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+    <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-emerald-500 to-teal-500"></div>
+    <div class="flex items-center justify-between gap-2">
+      <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700"><i class="bi bi-check2-circle"></i></span>
+      <span class="text-2xl font-bold tracking-tight text-emerald-600">{{ stats?.bolsas_entregadas ?? '—' }}</span>
+    </div>
+    <div class="mt-2 text-xs font-medium text-gray-500">Bolsas entregadas</div>
+  </div>
+  <div class="relative overflow-hidden rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+    <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-sky-500 to-cyan-500"></div>
+    <div class="flex items-center justify-between gap-2">
+      <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-sky-100 text-sky-700"><i class="bi bi-hdd-stack"></i></span>
+      <span class="text-2xl font-bold tracking-tight text-gray-900">{{ totalCasilleros || '—' }}</span>
+    </div>
+    <div class="mt-2 text-xs font-medium text-gray-500">
+      Casilleros
+      <span class="text-gray-400">· {{ casilleroResumen.disponibles }} dispon. / {{ casilleroResumen.llenos }} llenos</span>
+    </div>
+  </div>
+  <div class="relative overflow-hidden rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+    <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-teal-500 to-emerald-500"></div>
+    <div class="flex items-center justify-between gap-2">
+      <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-teal-100 text-teal-700"><i class="bi bi-graph-up"></i></span>
+      <span class="text-2xl font-bold tracking-tight text-teal-600">{{ stats?.espacios_disponibles ?? '—' }}</span>
+    </div>
+    <div class="mt-2 text-xs font-medium text-gray-500">Espacios disponibles</div>
   </div>
 </div>
+
+<!-- Gráficos -->
+<div class="mb-6 grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
+  <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+    <h5 class="mb-4 flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-gray-700">
+      <i class="bi bi-pie-chart text-fuchsia-600"></i> Estado de las bolsas
+    </h5>
+    <div class="flex items-center justify-center">
+      <div class="relative h-40 w-40 rounded-full shadow-inner" [style.background]="bolsasDonut">
+        <div class="absolute inset-[18%] flex flex-col items-center justify-center rounded-full bg-white">
+          <span class="text-3xl font-extrabold tracking-tight text-gray-900">{{ totalBolsas }}</span>
+          <span class="text-[10px] font-medium uppercase tracking-wide text-gray-500">Total bolsas</span>
+        </div>
+      </div>
+    </div>
+    <div class="mt-5 space-y-2 text-sm">
+      <div class="flex items-center justify-between">
+        <span class="flex items-center gap-2 text-gray-600"><span class="h-3 w-3 rounded-full bg-amber-500"></span> Pendientes de entrega</span>
+        <span class="font-bold text-gray-900">{{ stats?.bolsas_pendientes ?? 0 }}</span>
+      </div>
+      <div class="flex items-center justify-between">
+        <span class="flex items-center gap-2 text-gray-600"><span class="h-3 w-3 rounded-full bg-emerald-500"></span> Entregadas</span>
+        <span class="font-bold text-gray-900">{{ stats?.bolsas_entregadas ?? 0 }}</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+    <h5 class="mb-4 flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-gray-700">
+      <i class="bi bi-hdd-stack text-sky-600"></i> Estado de los casilleros
+    </h5>
+    <div class="flex items-center justify-center">
+      <div class="relative h-40 w-40 rounded-full shadow-inner" [style.background]="casillerosDonut">
+        <div class="absolute inset-[18%] flex flex-col items-center justify-center rounded-full bg-white">
+          <span class="text-3xl font-extrabold tracking-tight text-gray-900">{{ casilleroResumen.pct }}%</span>
+          <span class="text-[10px] font-medium uppercase tracking-wide text-gray-500">Ocupación</span>
+        </div>
+      </div>
+    </div>
+    <div class="mt-5 space-y-2 text-sm">
+      <div class="flex items-center justify-between">
+        <span class="flex items-center gap-2 text-gray-600"><span class="h-3 w-3 rounded-full bg-sky-500"></span> Disponibles</span>
+        <span class="font-bold text-sky-600">{{ casilleroResumen.disponibles }}</span>
+      </div>
+      <div class="flex items-center justify-between">
+        <span class="flex items-center gap-2 text-gray-600"><span class="h-3 w-3 rounded-full bg-amber-500"></span> Con espacio</span>
+        <span class="font-bold text-amber-600">{{ casilleroResumen.parciales }}</span>
+      </div>
+      <div class="flex items-center justify-between">
+        <span class="flex items-center gap-2 text-gray-600"><span class="h-3 w-3 rounded-full bg-rose-500"></span> Llenos</span>
+        <span class="font-bold text-rose-600">{{ casilleroResumen.llenos }}</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm md:col-span-2 lg:col-span-1">
+    <h5 class="mb-4 flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-gray-700">
+      <i class="bi bi-graph-up text-teal-600"></i> Capacidad del almacén
+    </h5>
+    <div class="flex items-center justify-center">
+      <div class="relative h-40 w-40 rounded-full shadow-inner" [style.background]="ocupacionDonut">
+        <div class="absolute inset-[18%] flex flex-col items-center justify-center rounded-full bg-white">
+          <span class="text-3xl font-extrabold tracking-tight text-gray-900">{{ casilleroResumen.pct }}%</span>
+          <span class="text-[10px] font-medium uppercase tracking-wide text-gray-500">Ocupado</span>
+        </div>
+      </div>
+    </div>
+    <div class="mt-5">
+      <div class="mb-1 flex items-center justify-between text-xs text-gray-500">
+        <span>{{ casilleroResumen.ocupados }} posiciones ocupadas</span>
+        <span>{{ casilleroResumen.capacidad }} en total</span>
+      </div>
+      <div class="h-2.5 w-full overflow-hidden rounded-full bg-gray-200">
+        <div
+          class="h-full rounded-full bg-gradient-to-r from-fuchsia-500 to-purple-600 transition-all"
+          [style.width]="casilleroResumen.pct + '%'"
+        ></div>
+      </div>
+      <p class="mt-2 text-center text-xs text-gray-500">
+        {{ casilleroResumen.capacidad - casilleroResumen.ocupados }} espacios libres de almacenamiento
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- Ocupación por casillero -->
+@if (casilleros.length > 0) {
+  <div class="mb-6 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+    <h5 class="mb-4 flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-gray-700">
+      <i class="bi bi-bar-chart text-fuchsia-600"></i> Ocupación por casillero
+    </h5>
+    <div class="grid grid-cols-1 gap-x-8 gap-y-3 sm:grid-cols-2 lg:grid-cols-3">
+      @for (item of ocupacionPorCasillero(); track item.codigo) {
+        <div>
+          <div class="mb-1 flex items-center justify-between text-xs">
+            <span class="font-semibold text-gray-700">
+              <code class="rounded bg-gray-100 px-1.5 py-0.5 text-[11px] font-medium">{{ item.codigo }}</code>
+            </span>
+            <span class="text-gray-500">{{ item.ocupados }}/{{ item.capacidad }} · {{ item.pct }}%</span>
+          </div>
+          <div class="h-2 w-full overflow-hidden rounded-full bg-gray-200">
+            <div class="h-full rounded-full" [class]="barColor(item.pct)" [style.width]="item.bar"></div>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+}
 
 <!-- Búsqueda rápida -->
 <div class="mb-6 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
@@ -133,7 +267,7 @@
   @if (pendientes.length === 0) {
     <p class="px-5 py-4 text-sm text-gray-500">No hay bolsas pendientes de entrega.</p>
   } @else {
-    <div class="overflow-x-auto">
+    <div class="hidden overflow-x-auto md:block">
       <table class="w-full min-w-[640px] text-left text-sm">
         <thead class="bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
           <tr>
@@ -158,6 +292,23 @@
           }
         </tbody>
       </table>
+    </div>
+    <div class="space-y-3 p-4 md:hidden">
+      @for (b of pendientes; track b.id) {
+        <div class="flex items-center justify-between gap-2 rounded-xl border border-gray-200 bg-white p-3">
+          <div class="min-w-0">
+            <p class="truncate font-semibold text-gray-900">{{ b.clienta?.nombre }}</p>
+            <p class="text-xs text-gray-500">
+              {{ b.pedido?.codigo }} · <code class="rounded bg-gray-100 px-1 py-0.5">{{ b.codigo }}</code>
+            </p>
+            <p class="mt-1 text-xs text-gray-400">{{ b.fecha_almacenamiento }}</p>
+          </div>
+          <div class="shrink-0 text-right">
+            <span class="inline-block rounded-full bg-primary-600 px-2.5 py-0.5 text-xs font-medium text-white">{{ b.casillero?.codigo }}</span>
+            <p class="mt-1 font-mono text-xs text-gray-600">Pos. {{ pad(b.posicion!) }}</p>
+          </div>
+        </div>
+      }
     </div>
   }
 </div>

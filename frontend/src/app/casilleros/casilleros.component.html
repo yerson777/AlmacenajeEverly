@@ -85,7 +85,7 @@
 <!-- Vista de posiciones -->
 @if (casilleroSeleccionado && posiciones.length) {
   <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-    <div class="w-full max-w-2xl rounded-xl bg-white shadow-xl">
+    <div class="max-h-[calc(100vh-2rem)] w-full max-w-2xl overflow-y-auto rounded-xl bg-white shadow-xl">
       <div class="flex items-center justify-between border-b border-gray-200 px-5 py-4">
         <h5 class="text-base font-bold text-gray-900">
           Casillero {{ casilleroSeleccionado.codigo }} — posiciones
@@ -124,7 +124,7 @@
 <!-- Modal crear/editar -->
 @if (mostrarModal) {
   <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-    <div class="w-full max-w-lg rounded-xl bg-white shadow-xl">
+    <div class="max-h-[calc(100vh-2rem)] w-full max-w-lg overflow-y-auto rounded-xl bg-white shadow-xl">
       <div class="border-b border-gray-200 px-5 py-4">
         <h5 class="text-base font-bold text-gray-900">{{ editando ? 'Editar casillero' : 'Nuevo casillero' }}</h5>
       </div>
