@@ -5,10 +5,9 @@ import { Clienta, Fardo, Pedido, Venta } from '../models/models';
 import { validarTodo, errVisible, requerido, noNegativo, maxLong, fechaValida, positivo, ReglasPorCampo } from '../utils/validators';
 
 @Component({
-  selector: 'app-pedidos',
-  standalone: true,
-  imports: [FormsModule],
-  templateUrl: './pedidos.component.html'
+    selector: 'app-pedidos',
+    imports: [FormsModule],
+    templateUrl: './pedidos.component.html'
 })
 export class PedidosComponent implements OnInit {
   pedidos: Pedido[] = [];

@@ -5,10 +5,9 @@ import { AuthService } from '../services/auth.service';
 import { validarTodo, errVisible, requerido, emailOk, minLong, ReglasPorCampo } from '../utils/validators';
 
 @Component({
-  selector: 'app-login',
-  standalone: true,
-  imports: [FormsModule],
-  templateUrl: './login.component.html',
+    selector: 'app-login',
+    imports: [FormsModule],
+    templateUrl: './login.component.html'
 })
 export class LoginComponent {
   email = '';

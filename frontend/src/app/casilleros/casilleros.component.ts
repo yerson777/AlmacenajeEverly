@@ -5,10 +5,9 @@ import { Casillero, CasilleroPosicion } from '../models/models';
 import { validarTodo, errVisible, requerido, noSoloEspacios, maxLong, entero, positivo, ReglasPorCampo } from '../utils/validators';
 
 @Component({
-  selector: 'app-casilleros',
-  standalone: true,
-  imports: [FormsModule],
-  templateUrl: './casilleros.component.html'
+    selector: 'app-casilleros',
+    imports: [FormsModule],
+    templateUrl: './casilleros.component.html'
 })
 export class CasillerosComponent implements OnInit {
   casilleros: Casillero[] = [];

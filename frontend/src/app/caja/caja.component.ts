@@ -7,10 +7,9 @@ import { validarTodo, errVisible, requerido, maxLong, positivo, fechaValida, Reg
 type Filtro = 'hoy' | 'semana' | 'mes' | 'rango';
 
 @Component({
-  selector: 'app-caja',
-  standalone: true,
-  imports: [FormsModule],
-  templateUrl: './caja.component.html'
+    selector: 'app-caja',
+    imports: [FormsModule],
+    templateUrl: './caja.component.html'
 })
 export class CajaComponent implements OnInit {
   datos: CajaStats | null = null;

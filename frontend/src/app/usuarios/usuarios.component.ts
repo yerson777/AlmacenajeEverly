@@ -5,10 +5,9 @@ import { Usuario } from '../models/models';
 import { validarTodo, errVisible, requerido, emailOk, maxLong, minLong, Validator, ReglasPorCampo } from '../utils/validators';
 
 @Component({
-  selector: 'app-usuarios',
-  standalone: true,
-  imports: [FormsModule],
-  templateUrl: './usuarios.component.html'
+    selector: 'app-usuarios',
+    imports: [FormsModule],
+    templateUrl: './usuarios.component.html'
 })
 export class UsuariosComponent implements OnInit {
   usuarios: Usuario[] = [];

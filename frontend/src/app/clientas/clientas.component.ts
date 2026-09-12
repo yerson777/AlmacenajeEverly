@@ -5,10 +5,9 @@ import { Clienta } from '../models/models';
 import { validarTodo, errVisible, requerido, soloLetras, soloDigitos, maxLong, emailOk, ReglasPorCampo } from '../utils/validators';
 
 @Component({
-  selector: 'app-clientas',
-  standalone: true,
-  imports: [FormsModule],
-  templateUrl: './clientas.component.html'
+    selector: 'app-clientas',
+    imports: [FormsModule],
+    templateUrl: './clientas.component.html'
 })
 export class ClientasComponent implements OnInit {
   clientas: Clienta[] = [];

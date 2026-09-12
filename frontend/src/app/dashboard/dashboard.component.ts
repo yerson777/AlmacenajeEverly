@@ -4,10 +4,9 @@ import { ApiService } from '../services/api.service';
 import { Bolsa, Casillero, DashboardStats } from '../models/models';
 
 @Component({
-  selector: 'app-dashboard',
-  standalone: true,
-  imports: [FormsModule],
-  templateUrl: './dashboard.component.html'
+    selector: 'app-dashboard',
+    imports: [FormsModule],
+    templateUrl: './dashboard.component.html'
 })
 export class DashboardComponent implements OnInit {
   stats: DashboardStats | null = null;

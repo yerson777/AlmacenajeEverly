@@ -6,10 +6,9 @@ import { filter, takeUntil } from 'rxjs/operators';
 import { AuthService } from '../services/auth.service';
 
 @Component({
-  selector: 'app-main-layout',
-  standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive],
-  templateUrl: './main-layout.component.html'
+    selector: 'app-main-layout',
+    imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive],
+    templateUrl: './main-layout.component.html'
 })
 export class MainLayoutComponent implements OnInit, OnDestroy {
   menuAbierto = false;

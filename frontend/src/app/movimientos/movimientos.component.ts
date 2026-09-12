@@ -5,10 +5,9 @@ import { ApiService } from '../services/api.service';
 import { Movimiento } from '../models/models';
 
 @Component({
-  selector: 'app-movimientos',
-  standalone: true,
-  imports: [CommonModule, FormsModule],
-  templateUrl: './movimientos.component.html'
+    selector: 'app-movimientos',
+    imports: [CommonModule, FormsModule],
+    templateUrl: './movimientos.component.html'
 })
 export class MovimientosComponent implements OnInit {
   movimientos: Movimiento[] = [];

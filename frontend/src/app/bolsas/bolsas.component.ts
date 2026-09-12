@@ -6,10 +6,9 @@ import { Bolsa, Casillero, Clienta, Pedido } from '../models/models';
 import { validarTodo, errVisible, requerido, maxLong, fechaValida, entero, ReglasPorCampo } from '../utils/validators';
 
 @Component({
-  selector: 'app-bolsas',
-  standalone: true,
-  imports: [CommonModule, FormsModule],
-  templateUrl: './bolsas.component.html'
+    selector: 'app-bolsas',
+    imports: [CommonModule, FormsModule],
+    templateUrl: './bolsas.component.html'
 })
 export class BolsasComponent implements OnInit {
   bolsas: Bolsa[] = [];
