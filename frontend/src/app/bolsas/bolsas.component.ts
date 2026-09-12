@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../services/api.service';
@@ -8,6 +8,7 @@ import { validarTodo, errVisible, requerido, maxLong, fechaValida, entero, Regla
 @Component({
     selector: 'app-bolsas',
     imports: [CommonModule, FormsModule],
+    changeDetection: ChangeDetectionStrategy.Eager,
     templateUrl: './bolsas.component.html'
 })
 export class BolsasComponent implements OnInit {

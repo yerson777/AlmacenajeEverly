@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../services/api.service';
 import { Usuario } from '../models/models';
@@ -7,6 +7,7 @@ import { validarTodo, errVisible, requerido, emailOk, maxLong, minLong, Validato
 @Component({
     selector: 'app-usuarios',
     imports: [FormsModule],
+    changeDetection: ChangeDetectionStrategy.Eager,
     templateUrl: './usuarios.component.html'
 })
 export class UsuariosComponent implements OnInit {

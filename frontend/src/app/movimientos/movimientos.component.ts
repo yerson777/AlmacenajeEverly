@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../services/api.service';
@@ -7,6 +7,7 @@ import { Movimiento } from '../models/models';
 @Component({
     selector: 'app-movimientos',
     imports: [CommonModule, FormsModule],
+    changeDetection: ChangeDetectionStrategy.Eager,
     templateUrl: './movimientos.component.html'
 })
 export class MovimientosComponent implements OnInit {

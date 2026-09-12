@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../services/api.service';
 import { Clienta } from '../models/models';
@@ -7,6 +7,7 @@ import { validarTodo, errVisible, requerido, soloLetras, soloDigitos, maxLong, e
 @Component({
     selector: 'app-clientas',
     imports: [FormsModule],
+    changeDetection: ChangeDetectionStrategy.Eager,
     templateUrl: './clientas.component.html'
 })
 export class ClientasComponent implements OnInit {

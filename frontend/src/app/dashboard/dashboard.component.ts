@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../services/api.service';
 import { Bolsa, Casillero, DashboardStats } from '../models/models';
@@ -6,6 +6,7 @@ import { Bolsa, Casillero, DashboardStats } from '../models/models';
 @Component({
     selector: 'app-dashboard',
     imports: [FormsModule],
+    changeDetection: ChangeDetectionStrategy.Eager,
     templateUrl: './dashboard.component.html'
 })
 export class DashboardComponent implements OnInit {

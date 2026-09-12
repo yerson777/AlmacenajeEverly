@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../services/api.service';
 import { CajaStats, Fardo, SerieCaja, Venta } from '../models/models';
@@ -9,6 +9,7 @@ type Filtro = 'hoy' | 'semana' | 'mes' | 'rango';
 @Component({
     selector: 'app-caja',
     imports: [FormsModule],
+    changeDetection: ChangeDetectionStrategy.Eager,
     templateUrl: './caja.component.html'
 })
 export class CajaComponent implements OnInit {

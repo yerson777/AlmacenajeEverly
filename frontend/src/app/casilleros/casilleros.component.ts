@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../services/api.service';
 import { Casillero, CasilleroPosicion } from '../models/models';
@@ -7,6 +7,7 @@ import { validarTodo, errVisible, requerido, noSoloEspacios, maxLong, entero, po
 @Component({
     selector: 'app-casilleros',
     imports: [FormsModule],
+    changeDetection: ChangeDetectionStrategy.Eager,
     templateUrl: './casilleros.component.html'
 })
 export class CasillerosComponent implements OnInit {

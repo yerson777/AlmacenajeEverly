@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../services/api.service';
 import { Clienta, Fardo, Pedido, Venta } from '../models/models';
@@ -7,6 +7,7 @@ import { validarTodo, errVisible, requerido, noNegativo, maxLong, fechaValida, p
 @Component({
     selector: 'app-pedidos',
     imports: [FormsModule],
+    changeDetection: ChangeDetectionStrategy.Eager,
     templateUrl: './pedidos.component.html'
 })
 export class PedidosComponent implements OnInit {
