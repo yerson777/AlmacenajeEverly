@@ -17,13 +17,6 @@
     @apply w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200;
   }
 
-  .estado-pendiente { @apply text-amber-600; }
-  .estado-entregada { @apply text-emerald-600; }
-
-  .badge-disponible { @apply bg-emerald-600 text-white; }
-  .badge-casi-lleno { @apply bg-yellow-400 text-yellow-950; }
-  .badge-lleno { @apply bg-red-600 text-white; }
-
   .casillero-card { @apply cursor-pointer transition-transform duration-100; }
   .casillero-card:hover { @apply -translate-y-0.5 shadow-lg; }
 
@@ -32,5 +25,15 @@
   }
   .posicion-libre { @apply bg-gray-50 text-gray-500 border-gray-200; }
   .posicion-ocupada { @apply bg-primary-600 text-white border-primary-600; }
-  .posicion-entregada { @apply bg-gray-100 text-gray-400 line-through border-gray-200; }
+
+  .nav-link { @apply rounded-lg px-3 py-1.5 text-sm font-medium text-white/90 transition-colors; }
+  .nav-link:hover { @apply bg-white/15 text-white; }
+  .active { @apply bg-white font-semibold text-primary-700 shadow-sm; }
+  .active:hover { @apply bg-white text-primary-800; }
+
+  .sin-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+  .sin-scrollbar::-webkit-scrollbar { display: none; }
+
+  .input-error { @apply border-red-400 bg-red-50 focus:border-red-500 focus:ring-red-200; }
+  .campo-error { @apply mt-1 text-xs font-medium text-red-600; }
 }

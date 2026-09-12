@@ -17,6 +17,7 @@ class Bolsa extends Model
         'fecha_almacenamiento',
         'estado',
         'observaciones',
+        'imagen',
     ];
 
     protected $dates = ['fecha_almacenamiento'];
@@ -42,26 +43,5 @@ class Bolsa extends Model
     public function movimientos(): HasMany
     {
         return $this->hasMany(Movimiento::class);
-    }
-
-    public function scopeBuscar($query, string $q = null)
-    {
-        if ($q) {
-            $query->where('codigo', 'like', "%{$q}%")
-                ->orWhereHas('clienta', function ($clientas) use ($q) {
-                    $clientas->where('nombre', 'like', "%{$q}%")
-                        ->orWhere('telefono', 'like', "%{$q}%");
-                })
-                ->orWhereHas('pedido', function ($pedidos) use ($q) {
-                    $pedidos->where('codigo', 'like', "%{$q}%");
-                });
-        }
-
-        return $query;
-    }
-
-    public function getEstaAlmacenadaAttribute(): bool
-    {
-        return $this->casillero_id !== null && $this->posicion !== null && $this->estado !== self::ESTADO_ENTREGADA;
     }
 }

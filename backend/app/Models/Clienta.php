@@ -24,14 +24,4 @@ class Clienta extends Model
     {
         return $this->hasMany(Bolsa::class);
     }
-
-    public function scopeBuscar($query, string $q = null)
-    {
-        if ($q) {
-            $query->where('nombre', 'like', "%{$q}%")
-                ->orWhere('telefono', 'like', "%{$q}%");
-        }
-
-        return $query;
-    }
 }

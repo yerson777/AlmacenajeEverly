@@ -1,15 +1,14 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../services/api.service';
 import { Casillero, CasilleroPosicion } from '../models/models';
+import { validarTodo, errVisible, requerido, noSoloEspacios, maxLong, entero, positivo, ReglasPorCampo } from '../utils/validators';
 
 @Component({
   selector: 'app-casilleros',
   standalone: true,
-  imports: [CommonModule, FormsModule],
-  templateUrl: './casilleros.component.html',
-  styleUrl: './casilleros.component.css'
+  imports: [FormsModule],
+  templateUrl: './casilleros.component.html'
 })
 export class CasillerosComponent implements OnInit {
   casilleros: Casillero[] = [];
@@ -24,6 +23,17 @@ export class CasillerosComponent implements OnInit {
   formDescripcion = '';
   formCapacidad = 30;
   formActivo = true;
+  errores: Record<string, string> = {};
+  intentado = false;
+  errVisible = errVisible;
+
+  private reglas(): ReglasPorCampo {
+    return {
+      codigo: [requerido(), noSoloEspacios(), maxLong(20)],
+      descripcion: [maxLong(255)],
+      capacidad: [entero(), positivo()],
+    };
+  }
 
   constructor(private api: ApiService) {}
 
@@ -52,6 +62,8 @@ export class CasillerosComponent implements OnInit {
     this.formActivo = true;
     this.mostrarModal = true;
     this.error = '';
+    this.errores = {};
+    this.intentado = false;
   }
 
   abrirEditar(c: Casillero): void {
@@ -62,10 +74,24 @@ export class CasillerosComponent implements OnInit {
     this.formActivo = c.activo;
     this.mostrarModal = true;
     this.error = '';
+    this.errores = {};
+    this.intentado = false;
   }
 
   guardar(): void {
     this.error = '';
+    this.intentado = true;
+    const res = validarTodo(
+      {
+        codigo: this.formCodigo,
+        descripcion: this.formDescripcion,
+        capacidad: this.formCapacidad,
+      },
+      this.reglas()
+    );
+    this.errores = res.errores;
+    if (!res.ok) return;
+
     const payload = {
       codigo: this.formCodigo.trim(),
       descripcion: this.formDescripcion.trim() || null,
@@ -82,7 +108,14 @@ export class CasillerosComponent implements OnInit {
         this.mostrarModal = false;
         this.cargar();
       },
-      error: (e) => (this.error = e.message),
+      error: (err) => {
+        const e = err as any;
+        if (e?.errors) {
+          this.errores = e.errors;
+          this.intentado = true;
+        }
+        this.error = e.message;
+      },
     });
   }
 

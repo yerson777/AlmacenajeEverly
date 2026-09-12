@@ -189,62 +189,115 @@
 <!-- Detalle -->
 @if (detalle) {
   <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-    <div class="max-h-[calc(100vh-2rem)] w-full max-w-2xl overflow-y-auto rounded-xl bg-white shadow-xl">
-      <div class="flex items-center justify-between border-b border-gray-200 px-5 py-4">
-        <h5 class="text-base font-bold text-gray-900">Bolsa <code class="rounded bg-primary-50 px-1.5 py-0.5 text-primary-700">{{ detalle.codigo }}</code></h5>
-        <button class="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600" (click)="detalle = null">
+    <div class="max-h-[calc(100vh-2rem)] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white shadow-xl">
+      <div class="relative overflow-hidden rounded-t-2xl bg-gradient-to-r from-fuchsia-600 via-purple-600 to-indigo-600 px-5 py-6">
+        <div class="pointer-events-none absolute -right-10 -top-16 h-44 w-44 rounded-full bg-white/10 blur-2xl"></div>
+        <div class="pointer-events-none absolute -bottom-20 right-24 h-40 w-40 rounded-full bg-white/10 blur-2xl"></div>
+        <button
+          class="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-lg bg-white/15 text-white transition-colors hover:bg-white/25"
+          (click)="detalle = null"
+          title="Cerrar"
+        >
           <i class="bi bi-x-lg"></i>
         </button>
-      </div>
-      <div class="p-5 text-sm">
-        <p class="mb-2"><strong class="text-gray-700">Clienta:</strong> {{ detalle.clienta?.nombre }}</p>
-        <p class="mb-2"><strong class="text-gray-700">Pedido:</strong> {{ detalle.pedido?.codigo }}</p>
-        <p class="mb-2">
-          <strong class="text-gray-700">📍 Ubicación:</strong>
-          @if (detalle.casillero && detalle.posicion != null && detalle.estado !== 'Entregada') {
-            {{ detalle.casillero.codigo }} / {{ pad(detalle.posicion!) }}
-          } @else {
-            <span class="text-gray-400">Liberada</span>
-          }
-        </p>
-        <p class="mb-2"><strong class="text-gray-700">Fecha almacenamiento:</strong> {{ detalle.fecha_almacenamiento }}</p>
-        <p class="mb-2"><strong class="text-gray-700">Estado:</strong> {{ detalle.estado }}</p>
-        <p class="mb-4"><strong class="text-gray-700">Observaciones:</strong> {{ detalle.observaciones || '—' }}</p>
-
-        <h6 class="mb-3 text-sm font-semibold text-gray-800">Historial de movimientos</h6>
-        @if (detalle.movimientos && detalle.movimientos.length > 0) {
-          <div class="overflow-x-auto rounded-lg border border-gray-200">
-            <table class="w-full text-left text-sm">
-              <thead class="bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
-                <tr>
-                  <th class="px-3 py-2 font-semibold">Fecha</th>
-                  <th class="px-3 py-2 font-semibold">Tipo</th>
-                  <th class="px-3 py-2 font-semibold">Origen</th>
-                  <th class="px-3 py-2 font-semibold">Destino</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-gray-100">
-                @for (m of detalle.movimientos; track m.id) {
-                  <tr>
-                    <td class="px-3 py-2 text-gray-600">{{ m.fecha | date: 'dd/MM/yyyy HH:mm' }}</td>
-                    <td class="px-3 py-2"><span class="inline-block rounded-full bg-gray-200 px-2 py-0.5 text-xs font-medium text-gray-700">{{ m.tipo }}</span></td>
-                    <td class="px-3 py-2 text-gray-600">
-                      @if (m.casillero_origen) {
-                        {{ m.casillero_origen.codigo }} / {{ pad(m.posicion_origen!) }}
-                      } @else { — }
-                    </td>
-                    <td class="px-3 py-2 text-gray-600">
-                      @if (m.casillero_destino) {
-                        {{ m.casillero_destino.codigo }} / {{ pad(m.posicion_destino!) }}
-                      } @else { — }
-                    </td>
-                  </tr>
-                }
-              </tbody>
-            </table>
+        <div class="flex items-center gap-4">
+          <span class="flex h-14 w-14 items-center justify-center rounded-2xl border border-white/25 bg-white/15 text-2xl text-white backdrop-blur">
+            <i class="bi bi-bag"></i>
+          </span>
+          <div class="min-w-0">
+            <p class="text-xs font-semibold uppercase tracking-widest text-white/70">Detalle de bolsa</p>
+            <h5 class="truncate text-2xl font-bold text-white">{{ detalle.codigo }}</h5>
+            @if (detalle.estado === 'Pendiente de entrega') {
+              <p class="mt-0.5 text-xs text-white/70"><i class="bi bi-clock mr-1"></i>{{ diasAlmacenada() }} días en almacén</p>
+            } @else {
+              <p class="mt-0.5 text-xs text-white/70"><i class="bi bi-check-circle mr-1"></i>Bolsa entregada</p>
+            }
           </div>
+          <span
+            class="ml-auto shrink-0 rounded-full px-3 py-1 text-xs font-semibold"
+            [class.bg-amber-400]="detalle.estado === 'Pendiente de entrega'"
+            [class.text-amber-950]="detalle.estado === 'Pendiente de entrega'"
+            [class.bg-emerald-400]="detalle.estado === 'Entregada'"
+            [class.text-emerald-950]="detalle.estado === 'Entregada'"
+          >{{ detalle.estado }}</span>
+        </div>
+      </div>
+
+      <div class="relative z-10 -mt-6 grid grid-cols-2 gap-3 px-5 lg:grid-cols-4">
+        <div class="rounded-xl border border-gray-200 bg-white p-3 shadow-sm">
+          <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-fuchsia-100 text-fuchsia-600"><i class="bi bi-geo-alt"></i></span>
+          <p class="mt-2 text-xs text-gray-400">Ubicación</p>
+          @if (detalle.casillero && detalle.posicion != null && detalle.estado !== 'Entregada') {
+            <p class="text-sm font-bold text-gray-900">{{ detalle.casillero.codigo }} / {{ pad(detalle.posicion!) }}</p>
+          } @else {
+            <p class="text-sm font-bold text-gray-400">Liberada</p>
+          }
+        </div>
+        <div class="rounded-xl border border-gray-200 bg-white p-3 shadow-sm">
+          <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-sky-100 text-sky-600"><i class="bi bi-person"></i></span>
+          <p class="mt-2 text-xs text-gray-400">Clienta</p>
+          <p class="truncate text-sm font-bold text-gray-900">{{ detalle.clienta?.nombre || '—' }}</p>
+        </div>
+        <div class="rounded-xl border border-gray-200 bg-white p-3 shadow-sm">
+          <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-100 text-purple-600"><i class="bi bi-receipt"></i></span>
+          <p class="mt-2 text-xs text-gray-400">Pedido</p>
+          <p class="text-sm font-bold text-gray-900">{{ detalle.pedido?.codigo || '—' }}</p>
+        </div>
+        <div class="rounded-xl border border-gray-200 bg-white p-3 shadow-sm">
+          <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-100 text-amber-600"><i class="bi bi-calendar-event"></i></span>
+          <p class="mt-2 text-xs text-gray-400">Almacenada el</p>
+          <p class="text-sm font-bold text-gray-900">{{ fmtFecha(detalle.fecha_almacenamiento) }}</p>
+        </div>
+      </div>
+
+      <div class="p-5">
+        @if (detalle.imagen) {
+          <div class="mb-5">
+            <p class="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-gray-500">
+              <i class="bi bi-camera text-primary-600"></i> Foto de la bolsa
+            </p>
+            <img [src]="detalle.imagen" alt="Foto de la bolsa {{ detalle.codigo }}"
+              class="max-h-72 w-full rounded-xl border border-gray-200 object-contain" />
+          </div>
+        }
+
+        @if (detalle.observaciones) {
+          <div class="mb-5 rounded-xl border border-gray-200 bg-gray-50 p-4">
+            <p class="mb-1 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-gray-500">
+              <i class="bi bi-sticky text-primary-600"></i> Observaciones
+            </p>
+            <p class="text-sm text-gray-700">{{ detalle.observaciones }}</p>
+          </div>
+        }
+
+        <h6 class="mb-4 flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-gray-700">
+          <i class="bi bi-clock-history text-fuchsia-600"></i> Historial de movimientos
+        </h6>
+        @if (detalle.movimientos && detalle.movimientos.length > 0) {
+          <ol class="relative ml-4 space-y-5">
+            <span class="absolute left-[15px] top-2 bottom-2 w-px bg-gradient-to-b from-fuchsia-300 via-purple-300 to-gray-200"></span>
+            @for (m of detalle.movimientos; track m.id) {
+              <li class="relative flex gap-4">
+                <span
+                  class="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-4 border-white shadow-sm {{ movClass(m.tipo) }}"
+                >
+                  <i class="bi {{ movIcon(m.tipo) }}"></i>
+                </span>
+                <div class="min-w-0 pt-0.5">
+                  <span class="inline-block rounded-full px-2 py-0.5 text-xs font-semibold {{ movClass(m.tipo) }}">{{ m.tipo }}</span>
+                  <p class="mt-1 text-xs text-gray-400">{{ m.fecha | date: 'dd/MM/yyyy HH:mm' }}</p>
+                  <p class="mt-0.5 text-sm text-gray-600">{{ movUbicacion(m) }}</p>
+                  @if (m.observaciones) {
+                    <p class="mt-0.5 text-xs italic text-gray-400">{{ m.observaciones }}</p>
+                  }
+                </div>
+              </li>
+            }
+          </ol>
         } @else {
-          <p class="text-sm text-gray-400">Sin movimientos registrados.</p>
+          <div class="rounded-xl border border-dashed border-gray-300 px-4 py-8 text-center text-sm text-gray-400">
+            Sin movimientos registrados.
+          </div>
         }
       </div>
       <div class="flex justify-end border-t border-gray-200 px-5 py-4">
@@ -271,21 +324,48 @@
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label class="mb-1 block text-sm font-medium text-gray-700">Clienta *</label>
-            <select class="input-primary" [(ngModel)]="formClientaId" (ngModelChange)="onClientaCambio()">
+            <div class="relative mb-2">
+              <i class="bi bi-search pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400"></i>
+              <input
+                class="input-primary pl-9"
+                [(ngModel)]="qClientas"
+                (ngModelChange)="buscarClientas()"
+                placeholder="Buscar por nombre o teléfono…"
+              />
+              @if (qClientas) {
+                <button
+                  class="absolute right-2 top-1/2 -translate-y-1/2 rounded-md px-1.5 py-0.5 text-xs text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                  (click)="qClientas = ''; cargarClientas('')"
+                  title="Limpiar"
+                >
+                  <i class="bi bi-x-lg"></i>
+                </button>
+              }
+            </div>
+            <select class="input-primary" [(ngModel)]="formClientaId" (ngModelChange)="onClientaCambio()" [class.input-error]="errVisible(errores['clienta_id'], formClientaId, intentado)">
               <option [ngValue]="null" disabled>Seleccione una clienta…</option>
               @for (c of clientas; track c.id) {
-                <option [ngValue]="c.id">{{ c.nombre }}</option>
+                <option [ngValue]="c.id">{{ clientaLabel(c) }}</option>
               }
             </select>
+            @if (errVisible(errores['clienta_id'], formClientaId, intentado)) {
+              <div class="campo-error">{{ errores['clienta_id'] }}</div>
+            }
+            @if (clientas.length === 0) {
+              <p class="mt-1 text-xs text-gray-400">Sin resultados con el filtro actual.</p>
+            }
           </div>
           <div>
             <label class="mb-1 block text-sm font-medium text-gray-700">Pedido *</label>
-            <select class="input-primary" [(ngModel)]="formPedidoId" [disabled]="!formClientaId">
+            <select class="input-primary" [(ngModel)]="formPedidoId" [disabled]="!formClientaId" [class.input-error]="errVisible(errores['pedido_id'], formPedidoId, intentado)">
               <option [ngValue]="null" disabled>{{ formClientaId ? 'Seleccione un pedido…' : 'Primero elija la clienta' }}</option>
               @for (p of pedidos; track p.id) {
                 <option [ngValue]="p.id">{{ p.codigo }}</option>
               }
             </select>
+            @if (errVisible(errores['pedido_id'], formPedidoId, intentado)) {
+              <div class="campo-error">{{ errores['pedido_id'] }}</div>
+            }
           </div>
         </div>
 
@@ -303,7 +383,7 @@
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label class="mb-1 block text-sm font-medium text-gray-700">Casillero *</label>
-            <select class="input-primary" [(ngModel)]="formCasilleroId">
+            <select class="input-primary" [(ngModel)]="formCasilleroId" [class.input-error]="errVisible(errores['casillero_id'], formCasilleroId, intentado)">
               <option [ngValue]="null" disabled>Seleccione un casillero…</option>
               @for (c of casilleros; track c.id) {
                 <option [ngValue]="c.id">
@@ -311,6 +391,9 @@
                 </option>
               }
             </select>
+            @if (errVisible(errores['casillero_id'], formCasilleroId, intentado)) {
+              <div class="campo-error">{{ errores['casillero_id'] }}</div>
+            }
           </div>
           <div>
             <label class="mb-1 block text-sm font-medium text-gray-700">Posición (vacío = automática, 1-{{ casilleroCapacidad() }})</label>
@@ -321,7 +404,10 @@
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label class="mb-1 block text-sm font-medium text-gray-700">Fecha de almacenamiento</label>
-            <input class="input-primary" type="date" [(ngModel)]="formFecha" />
+            <input class="input-primary" type="date" [(ngModel)]="formFecha" [class.input-error]="errVisible(errores['fecha_almacenamiento'], formFecha, intentado)" />
+            @if (errVisible(errores['fecha_almacenamiento'], formFecha, intentado)) {
+              <div class="campo-error">{{ errores['fecha_almacenamiento'] }}</div>
+            }
           </div>
           <div>
             <label class="mb-1 block text-sm font-medium text-gray-700">Estado</label>
@@ -334,7 +420,55 @@
 
         <div>
           <label class="mb-1 block text-sm font-medium text-gray-700">Observaciones</label>
-          <textarea class="input-primary" rows="2" [(ngModel)]="formObservaciones"></textarea>
+          <textarea class="input-primary" rows="2" [(ngModel)]="formObservaciones" [class.input-error]="errVisible(errores['observaciones'], formObservaciones, intentado)"></textarea>
+          @if (errVisible(errores['observaciones'], formObservaciones, intentado)) {
+            <div class="campo-error">{{ errores['observaciones'] }}</div>
+          }
+        </div>
+
+        <div>
+          <label class="mb-1 block text-sm font-medium text-gray-700">Foto de la bolsa</label>
+          @if (formImagen) {
+            <div class="flex items-start gap-3">
+              <img [src]="formImagen" alt="Foto de la bolsa" class="h-24 w-24 shrink-0 rounded-xl border border-gray-200 object-cover" />
+              <div class="flex flex-col gap-2">
+                <label class="inline-flex cursor-pointer items-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-50">
+                  <i class="bi bi-image"></i> Cambiar imagen
+                  <input type="file" accept="image/*" class="hidden" (change)="onImagenSeleccionado($event)" />
+                </label>
+                <button
+                  class="inline-flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-50"
+                  (click)="abrirCamara()"
+                >
+                  <i class="bi bi-camera"></i> Tomar foto
+                </button>
+                <button
+                  class="inline-flex items-center gap-1 rounded-lg border border-red-300 px-3 py-1.5 text-xs font-medium text-red-600 transition-colors hover:bg-red-50"
+                  (click)="quitarImagen()"
+                >
+                  <i class="bi bi-trash"></i> Quitar foto
+                </button>
+              </div>
+            </div>
+          } @else {
+            <div class="flex flex-col gap-2 sm:flex-row">
+              <label
+                class="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-6 text-sm text-gray-500 transition-colors hover:border-primary-400 hover:bg-primary-50 hover:text-primary-600"
+              >
+                <i class="bi bi-image"></i>
+                <span>Seleccionar imagen</span>
+                <input type="file" accept="image/*" class="hidden" (change)="onImagenSeleccionado($event)" />
+              </label>
+              <button
+                class="flex flex-1 items-center justify-center gap-2 rounded-xl border border-dashed border-primary-300 bg-primary-50 px-4 py-6 text-sm font-medium text-primary-600 transition-colors hover:bg-primary-100"
+                (click)="abrirCamara()"
+              >
+                <i class="bi bi-camera"></i>
+                <span>Tomar foto</span>
+              </button>
+            </div>
+          }
+          <p class="mt-1 text-xs text-gray-400">Opcional · máx. 2 MB. Ayuda a identificar la bolsa a simple vista.</p>
         </div>
       </div>
       <div class="flex justify-end gap-2 border-t border-gray-200 px-5 py-4">
@@ -345,8 +479,41 @@
         <button
           class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-60"
           (click)="registrar()"
-          [disabled]="!formClientaId || !formPedidoId || !formCasilleroId"
         >Guardar</button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal cámara -->
+@if (mostrarModalCamara) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+    <div class="w-full max-w-md overflow-hidden rounded-xl bg-white shadow-xl">
+      <div class="border-b border-gray-200 px-5 py-4">
+        <h5 class="text-base font-bold text-gray-900">Tomar foto de la bolsa</h5>
+      </div>
+      <div class="space-y-4 p-5">
+        @if (camaraError) {
+          <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{{ camaraError }}</div>
+        }
+        @if (camaraActiva) {
+          <video id="videoCamara" autoplay playsinline muted class="max-h-72 w-full rounded-xl bg-black object-cover"></video>
+          <p class="text-center text-xs text-gray-400">Encuadre la bolsa y presione Capturar.</p>
+          <div class="flex justify-center gap-2">
+            <button
+              class="inline-flex items-center gap-2 rounded-full bg-primary-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-700"
+              (click)="capturarFoto()"
+            >
+              <i class="bi bi-camera"></i> Capturar
+            </button>
+            <button
+              class="rounded-full bg-gray-100 px-6 py-2.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-200"
+              (click)="cerrarCamara()"
+            >Cancelar</button>
+          </div>
+        } @else if (!camaraError) {
+          <p class="py-8 text-center text-sm text-gray-500">Abriendo la cámara…</p>
+        }
       </div>
     </div>
   </div>
@@ -371,7 +538,7 @@
         </p>
         <div>
           <label class="mb-1 block text-sm font-medium text-gray-700">Casillero de destino *</label>
-          <select class="input-primary" [(ngModel)]="moverCasilleroId">
+          <select class="input-primary" [(ngModel)]="moverCasilleroId" [class.input-error]="errVisible(errores['casillero_id'], moverCasilleroId, intentado)">
             <option [ngValue]="null" disabled>Seleccione un casillero…</option>
             @for (c of casilleros; track c.id) {
               <option [ngValue]="c.id">
@@ -379,10 +546,16 @@
               </option>
             }
           </select>
+          @if (errVisible(errores['casillero_id'], moverCasilleroId, intentado)) {
+            <div class="campo-error">{{ errores['casillero_id'] }}</div>
+          }
         </div>
         <div>
           <label class="mb-1 block text-sm font-medium text-gray-700">Posición (vacío = automática)</label>
-          <input class="input-primary" type="number" min="1" [(ngModel)]="moverPosicion" placeholder="Automática" />
+          <input class="input-primary" type="number" min="1" [(ngModel)]="moverPosicion" placeholder="Automática" [class.input-error]="errVisible(errores['posicion'], moverPosicion, intentado)" />
+          @if (errVisible(errores['posicion'], moverPosicion, intentado)) {
+            <div class="campo-error">{{ errores['posicion'] }}</div>
+          }
         </div>
       </div>
       <div class="flex justify-end gap-2 border-t border-gray-200 px-5 py-4">

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\BolsaRequest;
 use App\Models\Bolsa;
 use App\Models\Casillero;
 use App\Models\Movimiento;
@@ -28,22 +29,14 @@ class BolsaController extends Controller
         }
 
         $bolsas = $query->paginate(50);
+        $bolsas->getCollection()->each->makeHidden('imagen');
 
         return response()->json($bolsas);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(BolsaRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'clienta_id' => 'required|exists:clientas,id',
-            'pedido_id' => 'required|exists:pedidos,id',
-            'codigo' => 'nullable|string|max:20|unique:bolsas,codigo',
-            'casillero_id' => 'required|exists:casilleros,id',
-            'posicion' => 'nullable|integer|min:1',
-            'fecha_almacenamiento' => 'nullable|date',
-            'estado' => 'nullable|string|max:50',
-            'observaciones' => 'nullable|string|max:500',
-        ]);
+        $data = $request->validated();
 
         $clientaId = $data['clienta_id'];
         $pedido = \App\Models\Pedido::with('clienta')->findOrFail($data['pedido_id']);
@@ -125,6 +118,7 @@ class BolsaController extends Controller
         $data = $request->validate([
             'observaciones' => 'nullable|string|max:500',
             'fecha_almacenamiento' => 'nullable|date',
+            'imagen' => 'nullable|string|max:3500000|regex:/^data:image\/[a-zA-Z0-9.+-]+;base64,/',
         ]);
 
         $bolsa->update($data);
@@ -138,10 +132,14 @@ class BolsaController extends Controller
             return response()->json(['message' => 'La bolsa ya fue entregada.'], 422);
         }
 
+        $data = $request->validate([
+            'observaciones' => 'nullable|string|max:500',
+        ]);
+
         $origenCasillero = $bolsa->casillero_id;
         $origenPosicion = $bolsa->posicion;
 
-        $bolsa = DB::transaction(function () use ($request, $bolsa, $origenCasillero, $origenPosicion) {
+        $bolsa = DB::transaction(function () use ($data, $bolsa, $origenCasillero, $origenPosicion) {
             $bolsa->update([
                 'estado' => Bolsa::ESTADO_ENTREGADA,
                 'casillero_id' => null,
@@ -154,7 +152,7 @@ class BolsaController extends Controller
                 'casillero_origen_id' => $origenCasillero,
                 'posicion_origen' => $origenPosicion,
                 'fecha' => now(),
-                'observaciones' => $request->input('observaciones'),
+                'observaciones' => $data['observaciones'] ?? null,
             ]);
 
             return $bolsa;
@@ -238,6 +236,12 @@ class BolsaController extends Controller
 
     public function destroy(Bolsa $bolsa): JsonResponse
     {
+        if ($bolsa->estado === Bolsa::ESTADO_PENDIENTE && $bolsa->posicion !== null) {
+            return response()->json([
+                'message' => 'No se puede eliminar una bolsa almacenada. Entréguela o muévala antes.',
+            ], 422);
+        }
+
         $bolsa->delete();
 
         return response()->json(['message' => 'Bolsa eliminada.']);

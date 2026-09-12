@@ -1,0 +1,576 @@
+<div class="mb-6">
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <div class="flex items-center gap-2">
+      <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-100 text-primary-700">
+        <i class="bi bi-cash-coin"></i>
+      </span>
+      <div>
+        <h4 class="text-xl font-bold text-gray-900">Caja</h4>
+        <p class="text-sm text-gray-500">Ventas, capital invertido y ganancias reales por fardo</p>
+      </div>
+    </div>
+    <div class="flex flex-wrap gap-2">
+      <button
+        class="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-700"
+        (click)="abrirNuevoFardo()"
+      >
+        <i class="bi bi-box-seam"></i> Nuevo fardo
+      </button>
+    </div>
+  </div>
+</div>
+
+@if (error) {
+  <div class="mb-3 flex items-center justify-between gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+    <span>{{ error }}</span>
+    <button class="rounded-md px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-100" (click)="error = ''">Cerrar</button>
+  </div>
+}
+@if (mensaje) {
+  <div class="mb-3 flex items-center justify-between gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+    <span>{{ mensaje }}</span>
+    <button class="rounded-md px-2 py-1 text-xs font-medium text-emerald-600 hover:bg-emerald-100" (click)="mensaje = ''">Cerrar</button>
+  </div>
+}
+
+@if (cargando) {
+  <div class="flex items-center justify-center py-16">
+    <span class="h-10 w-10 animate-spin rounded-full border-4 border-primary-200 border-t-primary-600"></span>
+  </div>
+} @else if (datos) {
+  <!-- Dinero vendido -->
+  <div class="mb-3 text-xs font-bold uppercase tracking-wide text-gray-400">Dinero vendido</div>
+  <div class="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+    <div class="relative overflow-hidden rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+      <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-fuchsia-500 to-purple-500"></div>
+      <div class="flex items-center justify-between gap-2">
+        <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-fuchsia-100 text-fuchsia-700"><i class="bi bi-calendar-day"></i></span>
+        <span class="text-2xl font-bold tracking-tight text-gray-900">{{ money(datos.ventas_hoy) }}</span>
+      </div>
+      <div class="mt-2 text-xs font-medium text-gray-500">Ventas de hoy</div>
+    </div>
+    <div class="relative overflow-hidden rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+      <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-sky-500 to-cyan-500"></div>
+      <div class="flex items-center justify-between gap-2">
+        <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-sky-100 text-sky-700"><i class="bi bi-calendar-week"></i></span>
+        <span class="text-2xl font-bold tracking-tight text-gray-900">{{ money(datos.ventas_semana) }}</span>
+      </div>
+      <div class="mt-2 text-xs font-medium text-gray-500">Ventas de la semana</div>
+    </div>
+    <div class="relative overflow-hidden rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+      <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-emerald-500 to-teal-500"></div>
+      <div class="flex items-center justify-between gap-2">
+        <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700"><i class="bi bi-calendar-month"></i></span>
+        <span class="text-2xl font-bold tracking-tight text-gray-900">{{ money(datos.ventas_mes) }}</span>
+      </div>
+      <div class="mt-2 text-xs font-medium text-gray-500">Ventas del mes</div>
+    </div>
+    <div class="relative overflow-hidden rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+      <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-purple-600 to-fuchsia-500"></div>
+      <div class="flex items-center justify-between gap-2">
+        <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-purple-100 text-purple-700"><i class="bi bi-graph-up-arrow"></i></span>
+        <span class="text-2xl font-bold tracking-tight text-purple-600">{{ money(datos.global.ganancia) }}</span>
+      </div>
+      <div class="mt-2 text-xs font-medium text-gray-500">Ganancia real <span class="text-gray-400">(acumulada)</span></div>
+    </div>
+  </div>
+
+  <!-- Capital -->
+  <div class="mb-3 text-xs font-bold uppercase tracking-wide text-gray-400">Recuperación del capital</div>
+  <div class="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+    <div class="relative overflow-hidden rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+      <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-gray-400 to-gray-500"></div>
+      <div class="flex items-center justify-between gap-2">
+        <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-200 text-gray-700"><i class="bi bi-piggy-bank"></i></span>
+        <span class="text-2xl font-bold tracking-tight text-gray-900">{{ money(datos.global.capital_invertido) }}</span>
+      </div>
+      <div class="mt-2 text-xs font-medium text-gray-500">Capital invertido ({{ datos.global.fardos }} fardos)</div>
+    </div>
+    <div class="relative overflow-hidden rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+      <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-teal-500 to-emerald-500"></div>
+      <div class="flex items-center justify-between gap-2">
+        <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-teal-100 text-teal-700"><i class="bi bi-arrow-down-circle"></i></span>
+        <span class="text-2xl font-bold tracking-tight text-teal-600">{{ money(datos.global.capital_recuperado) }}</span>
+      </div>
+      <div class="mt-2 text-xs font-medium text-gray-500">Capital recuperado</div>
+    </div>
+    <div class="relative overflow-hidden rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+      <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-amber-500 to-orange-500"></div>
+      <div class="flex items-center justify-between gap-2">
+        <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-100 text-amber-700"><i class="bi bi-hourglass-split"></i></span>
+        <span class="text-2xl font-bold tracking-tight text-amber-600">{{ money(datos.global.capital_pendiente) }}</span>
+      </div>
+      <div class="mt-2 text-xs font-medium text-gray-500">Capital pendiente de recuperar</div>
+    </div>
+    <div class="relative overflow-hidden rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+      <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-fuchsia-500 to-purple-500"></div>
+      <div class="flex items-center gap-2">
+        <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-fuchsia-100 text-fuchsia-700"><i class="bi bi-percent"></i></span>
+        <span class="text-2xl font-bold tracking-tight text-gray-900">{{ datos.global.porcentaje_recuperacion }}%</span>
+      </div>
+      <div class="mt-2 text-xs font-medium text-gray-500">
+        Recuperación general
+        <span class="text-gray-400">· {{ datos.global.fardos_recuperados }} fardos al 100%</span>
+      </div>
+      <div class="mt-2 h-2 w-full overflow-hidden rounded-full bg-gray-200">
+        <div
+          class="h-full rounded-full bg-gradient-to-r from-fuchsia-500 to-purple-600 transition-all"
+          [style.width.%]="datos.global.porcentaje_recuperacion"
+        ></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtros de periodo -->
+  <div class="mb-6 flex flex-wrap items-center gap-3 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+    <div class="flex rounded-lg border border-gray-200 bg-gray-50 p-1">
+      @for (f of ['hoy', 'semana', 'mes', 'rango']; track f) {
+        <button
+          class="rounded-md px-3 py-1.5 text-xs font-semibold transition-colors"
+          [class.bg-white]="filtro === f"
+          [class.text-fuchsia-700]="filtro === f"
+          [class.shadow-sm]="filtro === f"
+          [class.text-gray-500]="filtro !== f"
+          (click)="setFiltro(f)"
+        >{{ f === 'hoy' ? 'Hoy' : f === 'semana' ? 'Semana' : f === 'mes' ? 'Mes' : 'Rango' }}</button>
+      }
+    </div>
+    @if (filtro === 'rango') {
+      <div class="flex flex-wrap items-center gap-2">
+        <input class="input-primary max-w-[150px]" type="date" [(ngModel)]="desde" (change)="cargar()" />
+        <span class="text-sm text-gray-400">a</span>
+        <input class="input-primary max-w-[150px]" type="date" [(ngModel)]="hasta" (change)="cargar()" />
+      </div>
+    }
+    <div class="ml-auto text-sm">
+      <span class="mr-3 text-gray-600">
+        <strong class="text-gray-900">{{ money(datos.resumen.ventas) }}</strong>
+        <span class="text-xs text-gray-400"> vendido · {{ filtroLabel() }}</span>
+      </span>
+      <span class="text-xs text-gray-400">{{ datos.resumen.ventas_count }} ventas · {{ datos.resumen.pedidos_count }} pedidos</span>
+    </div>
+  </div>
+
+  <!-- Gráfico + formas de pago -->
+  <div class="mb-6 grid grid-cols-1 gap-5 lg:grid-cols-3">
+    <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm lg:col-span-2">
+      <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <h5 class="flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-gray-700">
+          <i class="bi bi-bar-chart text-fuchsia-600"></i> Evolución de ventas
+        </h5>
+        <div class="flex rounded-lg border border-gray-200 bg-gray-50 p-1">
+          @for (t of ['dia', 'semana', 'mes']; track t) {
+            <button
+              class="rounded-md px-3 py-1.5 text-xs font-semibold transition-colors"
+              [class.bg-white]="chartTab === t"
+              [class.text-fuchsia-700]="chartTab === t"
+              [class.shadow-sm]="chartTab === t"
+              [class.text-gray-500]="chartTab !== t"
+              (click)="setChartTab(t)"
+            >{{ t === 'dia' ? 'Día' : t === 'semana' ? 'Semana' : 'Mes' }}</button>
+          }
+        </div>
+      </div>
+      @if (!tieneSerie) {
+        <div class="flex h-44 items-center justify-center rounded-xl border border-dashed border-gray-300 text-sm text-gray-400">
+          Sin ventas en este periodo.
+        </div>
+      } @else {
+        <div class="overflow-x-auto">
+          <div class="flex min-h-[190px] items-end gap-1.5 pb-1 pt-2" [class.min-w-[680px]]="chartTab === 'dia'" [class.min-w-[360px]]="chartTab !== 'dia'">
+            @for (item of serie; track item.fecha) {
+              <div class="flex flex-1 flex-col items-center gap-1" [title]="item.etiqueta + ': ' + money(item.ventas) + ' | ' + item.cantidad + ' ventas'">
+                <div
+                  class="w-full rounded-t-md bg-gradient-to-t transition-all"
+                  [class]="isMax(item) ? 'from-fuchsia-600 to-purple-500' : 'from-primary-300 to-primary-500'"
+                  [style.height.px]="barHeight(item.ventas)"
+                ></div>
+                <span class="text-[10px] text-gray-400">{{ item.etiqueta }}</span>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+
+    <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+      <h5 class="mb-4 flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-gray-700">
+        <i class="bi bi-wallet2 text-teal-600"></i> Formas de pago
+      </h5>
+      <div class="space-y-3">
+        @for (fp of formas; track fp) {
+          <div>
+            <div class="mb-1 flex items-center justify-between text-sm">
+              <span class="flex items-center gap-2 text-gray-600">
+                <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-gray-100 text-gray-600"><i class="bi {{ formaIcons[fp] }}"></i></span>
+                {{ fp }}
+              </span>
+              <span class="font-semibold text-gray-900">{{ money(formaTotal(fp)) }}</span>
+            </div>
+            <div class="h-2 w-full overflow-hidden rounded-full bg-gray-200">
+              <div
+                class="h-full rounded-full bg-teal-500 transition-all"
+                [style.width.%]="maxFormaPct() ? (formaPct(fp) / maxFormaPct() * 100) : 0"
+              ></div>
+            </div>
+            <div class="mt-0.5 text-xs text-gray-400">{{ formaCantidad(fp) }} pagos · {{ formaPct(fp) }}%</div>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- Fardos -->
+  <div class="mb-6">
+    <div class="mb-3 flex items-center justify-between gap-2">
+      <h5 class="flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-gray-700">
+        <i class="bi bi-boxes text-fuchsia-600"></i> Fardos ({{ datos.fardos.length }})
+      </h5>
+    </div>
+    @if (datos.fardos.length === 0) {
+      <div class="rounded-2xl border border-dashed border-gray-300 bg-white px-4 py-10 text-center text-sm text-gray-400">
+        Aún no hay fardos registrados. Crea el primero con "Nuevo fardo".
+      </div>
+    } @else {
+      <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+        @for (f of datos.fardos; track f.id) {
+          <div class="flex flex-col rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+            <div class="flex items-start justify-between gap-2">
+              <div class="min-w-0">
+                <h6 class="truncate text-base font-bold text-gray-900">{{ f.codigo }}</h6>
+                <p class="text-sm text-gray-500">{{ f.categoria }}</p>
+              </div>
+              <span class="shrink-0 inline-block rounded-full px-2.5 py-0.5 text-xs font-medium {{ estadoBadge(f) }}">{{ f.estado_recuperacion }}</span>
+            </div>
+            @if (f.descripcion) {
+              <p class="mt-1 text-xs text-gray-400">{{ f.descripcion }}</p>
+            }
+            <div class="mt-3">
+              <div class="mb-1 flex items-center justify-between text-xs">
+                <span class="text-gray-500">{{ f.porcentaje_recuperacion }}% recuperado</span>
+                <span class="text-gray-400">
+                  @if (f.cantidad_prendas != null) { {{ f.cantidad_prendas }} prendas }
+                  @if (f.cantidad_prendas != null && f.fecha_compra) { · }
+                  @if (f.fecha_compra) { {{ formatFecha(f.fecha_compra) }} }
+                </span>
+              </div>
+              <div class="h-2.5 w-full overflow-hidden rounded-full bg-gray-200">
+                <div class="h-full rounded-full {{ barColor(pctCapital(f)) }} transition-all" [style.width.%]="pctCapital(f)"></div>
+              </div>
+            </div>
+            <div class="mt-4 grid grid-cols-2 gap-2 text-sm">
+              <div class="rounded-lg bg-gray-50 px-3 py-2">
+                <p class="text-xs text-gray-400">Capital</p>
+                <p class="font-semibold text-gray-900">{{ money(f.capital_invertido) }}</p>
+              </div>
+              <div class="rounded-lg bg-gray-50 px-3 py-2">
+                <p class="text-xs text-gray-400">Vendido</p>
+                <p class="font-semibold text-gray-900">{{ money(f.ventas_acumuladas) }}</p>
+              </div>
+              <div class="rounded-lg bg-teal-50 px-3 py-2">
+                <p class="text-xs text-teal-600">Recuperado</p>
+                <p class="font-semibold text-teal-700">{{ money(f.capital_recuperado) }}</p>
+              </div>
+              <div class="rounded-lg bg-amber-50 px-3 py-2">
+                <p class="text-xs text-amber-600">Pendiente</p>
+                <p class="font-semibold text-amber-700">{{ money(f.capital_pendiente) }}</p>
+              </div>
+            </div>
+            <div class="mt-3 flex items-center justify-between rounded-lg border border-purple-100 bg-purple-50 px-3 py-2 text-sm">
+              <span class="text-xs font-medium text-purple-600">Ganancia</span>
+              <span class="font-bold text-purple-700">{{ money(f.ganancia) }}</span>
+            </div>
+            <div class="mt-4 flex flex-wrap gap-2">
+              <button
+                class="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-xs font-semibold text-gray-600 transition-colors hover:bg-gray-50"
+                (click)="verFardo(f)"
+              >
+                <i class="bi bi-eye"></i> Detalle
+              </button>
+              <button
+                class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-300 text-gray-600 transition-colors hover:bg-gray-50"
+                (click)="abrirEditarFardo(f)"
+                title="Editar fardo"
+              >
+                <i class="bi bi-pencil"></i>
+              </button>
+              <button
+                class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-red-300 text-red-600 transition-colors hover:bg-red-50"
+                (click)="eliminarFardo(f)"
+                title="Eliminar fardo"
+              >
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </div>
+
+  <!-- Historial -->
+  <div class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+    <div class="flex items-center justify-between gap-2 border-b border-gray-200 px-5 py-4">
+      <h6 class="flex items-center gap-2 text-base font-semibold text-gray-900">
+        <i class="bi bi-clock-history text-primary-600"></i> Historial de ventas
+        <span class="text-xs font-normal text-gray-400">({{ filtroLabel() }})</span>
+      </h6>
+    </div>
+    @if (datos.ventas.length === 0) {
+      <p class="px-5 py-6 text-sm text-gray-400">No hay ventas registradas en este periodo.</p>
+    } @else {
+      <div class="hidden overflow-x-auto md:block">
+        <table class="w-full min-w-[760px] text-left text-sm">
+          <thead class="bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
+            <tr>
+              <th class="px-5 py-3 font-semibold">Fecha</th>
+              <th class="px-5 py-3 font-semibold">Pedido</th>
+              <th class="px-5 py-3 font-semibold">Clienta</th>
+              <th class="px-5 py-3 font-semibold">Fardo</th>
+              <th class="px-5 py-3 font-semibold">Categoría</th>
+              <th class="px-5 py-3 text-right font-semibold">Venta</th>
+              <th class="px-5 py-3 font-semibold">Forma de pago</th>
+              <th class="px-5 py-3 text-right font-semibold">Acciones</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100 bg-white">
+            @for (v of datos.ventas; track v.id) {
+              <tr class="transition-colors hover:bg-primary-50">
+                <td class="px-5 py-3 text-gray-600">{{ formatFecha(v.fecha) }}</td>
+                <td class="px-5 py-3 text-gray-600">{{ v.codigo_pedido || '—' }}</td>
+                <td class="px-5 py-3 font-semibold text-gray-800">{{ v.clienta_nombre || '—' }}</td>
+                <td class="px-5 py-3"><code class="rounded bg-gray-100 px-1.5 py-0.5 text-xs font-medium text-gray-700">{{ v.fardo_codigo }}</code></td>
+                <td class="px-5 py-3 text-gray-600">{{ v.fardo_categoria }}</td>
+                <td class="px-5 py-3 text-right font-bold text-gray-900">{{ money(v.monto) }}</td>
+                <td class="px-5 py-3">
+                  <span class="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-700">
+                    <i class="bi {{ formaIcons[v.forma_pago] || 'bi-cash' }}"></i> {{ v.forma_pago }}
+                  </span>
+                </td>
+                <td class="px-5 py-3 text-right">
+                  <div class="flex items-center justify-end gap-1.5">
+                    <button
+                      class="inline-flex h-7 w-7 items-center justify-center rounded-md border border-amber-300 text-amber-600 transition-colors hover:bg-amber-50"
+                      (click)="anularVenta(v)"
+                      title="Anular venta"
+                    >
+                      <i class="bi bi-x-circle"></i>
+                    </button>
+                    <button
+                      class="inline-flex h-7 w-7 items-center justify-center rounded-md border border-red-300 text-red-600 transition-colors hover:bg-red-50"
+                      (click)="eliminarVenta(v)"
+                      title="Eliminar"
+                    >
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <div class="space-y-3 p-4 md:hidden">
+        @for (v of datos.ventas; track v.id) {
+          <div class="rounded-xl border border-gray-200 bg-white p-3">
+            <div class="flex items-start justify-between gap-2">
+              <div class="min-w-0">
+                <p class="truncate font-semibold text-gray-900">{{ v.clienta_nombre || '—' }}</p>
+                <p class="text-xs text-gray-500">{{ formatFecha(v.fecha) }} · {{ v.codigo_pedido || 'sin pedido' }}</p>
+                <p class="mt-1 text-xs text-gray-500"><code class="rounded bg-gray-100 px-1 py-0.5">{{ v.fardo_codigo }}</code> · {{ v.fardo_categoria }}</p>
+              </div>
+              <span class="shrink-0 font-bold text-gray-900">{{ money(v.monto) }}</span>
+            </div>
+            <div class="mt-2 flex items-center justify-between">
+              <span class="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-700">
+                <i class="bi {{ formaIcons[v.forma_pago] || 'bi-cash' }}"></i> {{ v.forma_pago }}
+              </span>
+              <div class="flex gap-1.5">
+                <button
+                  class="inline-flex h-7 w-7 items-center justify-center rounded-md border border-amber-300 text-amber-600"
+                  (click)="anularVenta(v)"
+                  title="Anular venta"
+                >
+                  <i class="bi bi-x-circle"></i>
+                </button>
+                <button
+                  class="inline-flex h-7 w-7 items-center justify-center rounded-md border border-red-300 text-red-600"
+                  (click)="eliminarVenta(v)"
+                  title="Eliminar"
+                >
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </div>
+}
+
+<!-- Modal fardo -->
+@if (mostrarFardo) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+    <div class="max-h-[calc(100vh-2rem)] w-full max-w-lg overflow-y-auto rounded-xl bg-white shadow-xl">
+      <div class="border-b border-gray-200 px-5 py-4">
+        <h5 class="text-base font-bold text-gray-900">{{ editandoFardo ? 'Editar fardo' : 'Nuevo fardo' }}</h5>
+      </div>
+      <div class="space-y-4 p-5">
+        @if (error) {
+          <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{{ error }}</div>
+        }
+        @if (editandoFardo) {
+          <div>
+            <label class="mb-1 block text-sm font-medium text-gray-700">Código</label>
+            <input class="input-primary" [(ngModel)]="formFardo.codigo" />
+          </div>
+        }
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <label class="mb-1 block text-sm font-medium text-gray-700">Categoría *</label>
+            <input class="input-primary" [(ngModel)]="formFardo.categoria" placeholder="Ej: Vestidos, Enterizos…" [class.input-error]="errVisible(errores['categoria'], formFardo.categoria, intentado)" />
+            @if (errVisible(errores['categoria'], formFardo.categoria, intentado)) {
+              <div class="campo-error">{{ errores['categoria'] }}</div>
+            }
+          </div>
+          <div>
+            <label class="mb-1 block text-sm font-medium text-gray-700">Fecha de compra</label>
+            <input class="input-primary" type="date" [(ngModel)]="formFardo.fecha_compra" [class.input-error]="errVisible(errores['fecha_compra'], formFardo.fecha_compra, intentado)" />
+            @if (errVisible(errores['fecha_compra'], formFardo.fecha_compra, intentado)) {
+              <div class="campo-error">{{ errores['fecha_compra'] }}</div>
+            }
+          </div>
+        </div>
+        <div>
+          <label class="mb-1 block text-sm font-medium text-gray-700">Descripción</label>
+          <input class="input-primary" [(ngModel)]="formFardo.descripcion" placeholder="Ej: Fardo de vestidos americanos" />
+        </div>
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <label class="mb-1 block text-sm font-medium text-gray-700">Capital invertido (Bs) *</label>
+            <input class="input-primary" type="number" min="0" step="0.01" [(ngModel)]="formFardo.capital_invertido" placeholder="Ej: 2000" [class.input-error]="errVisible(errores['capital_invertido'], formFardo.capital_invertido, intentado)" />
+            @if (errVisible(errores['capital_invertido'], formFardo.capital_invertido, intentado)) {
+              <div class="campo-error">{{ errores['capital_invertido'] }}</div>
+            }
+          </div>
+          <div>
+            <label class="mb-1 block text-sm font-medium text-gray-700">Cantidad de prendas</label>
+            <input class="input-primary" type="number" min="0" [(ngModel)]="formFardo.cantidad_prendas" placeholder="Opcional" [class.input-error]="errVisible(errores['cantidad_prendas'], formFardo.cantidad_prendas, intentado)" />
+            @if (errVisible(errores['cantidad_prendas'], formFardo.cantidad_prendas, intentado)) {
+              <div class="campo-error">{{ errores['cantidad_prendas'] }}</div>
+            }
+          </div>
+        </div>
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <label class="mb-1 block text-sm font-medium text-gray-700">Estado</label>
+            <select class="input-primary" [(ngModel)]="formFardo.estado">
+              <option value="En venta">En venta</option>
+              <option value="Agotado">Agotado</option>
+              <option value="Inactivo">Inactivo</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="mb-1 block text-sm font-medium text-gray-700">Observaciones</label>
+          <textarea class="input-primary" rows="2" [(ngModel)]="formFardo.observaciones"></textarea>
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 border-t border-gray-200 px-5 py-4">
+        <button class="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-200" (click)="mostrarFardo = false">Cancelar</button>
+        <button
+          class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-60"
+          (click)="guardarFardo()"
+        >Guardar</button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal detalle fardo -->
+@if (detalleFardo) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+    <div class="max-h-[calc(100vh-2rem)] w-full max-w-2xl overflow-y-auto rounded-xl bg-white shadow-xl">
+      <div class="flex items-center justify-between border-b border-gray-200 px-5 py-4">
+        <h5 class="text-base font-bold text-gray-900">
+          {{ detalleFardo.codigo }}
+          <span class="ml-1 text-sm font-medium text-gray-500">{{ detalleFardo.categoria }}</span>
+        </h5>
+        <button class="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600" (click)="detalleFardo = null">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+      <div class="p-5 text-sm">
+        <div class="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <div class="rounded-lg bg-gray-50 px-3 py-2">
+            <p class="text-xs text-gray-400">Capital</p>
+            <p class="font-semibold text-gray-900">{{ money(detalleFardo.capital_invertido) }}</p>
+          </div>
+          <div class="rounded-lg bg-teal-50 px-3 py-2">
+            <p class="text-xs text-teal-600">Recuperado</p>
+            <p class="font-semibold text-teal-700">{{ money(detalleFardo.capital_recuperado) }}</p>
+          </div>
+          <div class="rounded-lg bg-amber-50 px-3 py-2">
+            <p class="text-xs text-amber-600">Pendiente</p>
+            <p class="font-semibold text-amber-700">{{ money(detalleFardo.capital_pendiente) }}</p>
+          </div>
+          <div class="rounded-lg bg-purple-50 px-3 py-2">
+            <p class="text-xs text-purple-600">Ganancia</p>
+            <p class="font-semibold text-purple-700">{{ money(detalleFardo.ganancia) }}</p>
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <div class="mb-1 flex items-center justify-between text-xs">
+            <span class="text-gray-500">Recuperación del capital</span>
+            <span class="font-semibold text-gray-700">{{ detalleFardo.porcentaje_recuperacion }}%</span>
+          </div>
+          <div class="h-2.5 w-full overflow-hidden rounded-full bg-gray-200">
+            <div class="h-full rounded-full {{ barColor(pctCapital(detalleFardo)) }} transition-all" [style.width.%]="pctCapital(detalleFardo)"></div>
+          </div>
+        </div>
+
+        <div class="mb-2 grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-gray-500">
+          @if (detalleFardo.descripcion) { <div>Descripción: {{ detalleFardo.descripcion }}</div> }
+          @if (detalleFardo.fecha_compra) { <div>Fecha de compra: {{ formatFecha(detalleFardo.fecha_compra) }}</div> }
+          @if (detalleFardo.cantidad_prendas != null) { <div>Cantidad: {{ detalleFardo.cantidad_prendas }} prendas</div> }
+          <div>Pendiente venta total: {{ money(detalleFardo.ventas_acumuladas) }}</div>
+        </div>
+
+        <h6 class="mb-3 mt-5 text-sm font-semibold text-gray-800">Ventas del fardo ({{ detalleFardo.ventas?.length ?? 0 }})</h6>
+        @if (detalleFardo.ventas && detalleFardo.ventas.length > 0) {
+          <div class="overflow-x-auto rounded-lg border border-gray-200">
+            <table class="w-full text-left text-sm">
+              <thead class="bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
+                <tr>
+                  <th class="px-3 py-2 font-semibold">Fecha</th>
+                  <th class="px-3 py-2 font-semibold">Clienta</th>
+                  <th class="px-3 py-2 font-semibold">Pedido</th>
+                  <th class="px-3 py-2 text-right font-semibold">Monto</th>
+                  <th class="px-3 py-2 font-semibold">Pago</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100">
+                @for (v of detalleFardo.ventas; track v.id) {
+                  <tr>
+                    <td class="px-3 py-2 text-gray-600">{{ formatFecha(v.fecha) }}</td>
+                    <td class="px-3 py-2 text-gray-600">{{ v.clienta?.nombre || '—' }}</td>
+                    <td class="px-3 py-2 text-gray-600">{{ v.pedido?.codigo || '—' }}</td>
+                    <td class="px-3 py-2 text-right font-semibold text-gray-900">{{ money(v.monto) }}</td>
+                    <td class="px-3 py-2"><span class="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-700">{{ v.forma_pago }}</span></td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        } @else {
+          <p class="text-sm text-gray-400">Este fardo todavía no tiene ventas registradas.</p>
+        }
+      </div>
+      <div class="flex justify-end border-t border-gray-200 px-5 py-4">
+        <button class="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-200" (click)="detalleFardo = null">Cerrar</button>
+      </div>
+    </div>
+  </div>
+}

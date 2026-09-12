@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ClientaRequest;
 use App\Models\Clienta;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -14,7 +15,7 @@ class ClientaController extends Controller
         $query = Clienta::query();
 
         if ($request->has('q') && $request->input('q') !== '') {
-            $q = $request->input('q');
+            $q = trim((string) $request->input('q'));
             $query->where('nombre', 'like', "%{$q}%")
                 ->orWhere('telefono', 'like', "%{$q}%")
                 ->orWhere('email', 'like', "%{$q}%");
@@ -25,15 +26,9 @@ class ClientaController extends Controller
         return response()->json($clientas);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(ClientaRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'nombre' => 'required|string|max:255',
-            'telefono' => 'nullable|string|max:50',
-            'email' => 'nullable|email|max:255',
-            'direccion' => 'nullable|string|max:255',
-            'notas' => 'nullable|string|max:500',
-        ]);
+        $data = $request->validated();
 
         $clienta = Clienta::create($data);
 
@@ -47,15 +42,9 @@ class ClientaController extends Controller
         return response()->json(['data' => $clienta]);
     }
 
-    public function update(Request $request, Clienta $clienta): JsonResponse
+    public function update(ClientaRequest $request, Clienta $clienta): JsonResponse
     {
-        $data = $request->validate([
-            'nombre' => 'sometimes|required|string|max:255',
-            'telefono' => 'nullable|string|max:50',
-            'email' => 'nullable|email|max:255',
-            'direccion' => 'nullable|string|max:255',
-            'notas' => 'nullable|string|max:500',
-        ]);
+        $data = $request->validated();
 
         $clienta->update($data);
 
@@ -64,6 +53,18 @@ class ClientaController extends Controller
 
     public function destroy(Clienta $clienta): JsonResponse
     {
+        if ($clienta->pedidos()->exists()) {
+            return response()->json([
+                'message' => 'No se puede eliminar la clienta porque tiene pedidos registrados.',
+            ], 422);
+        }
+
+        if ($clienta->bolsas()->exists()) {
+            return response()->json([
+                'message' => 'No se puede eliminar la clienta porque tiene bolsas registradas.',
+            ], 422);
+        }
+
         $clienta->delete();
 
         return response()->json(['message' => 'Clienta eliminada.']);

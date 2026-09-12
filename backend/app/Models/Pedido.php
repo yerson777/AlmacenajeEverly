@@ -26,4 +26,9 @@ class Pedido extends Model
     {
         return $this->hasMany(Bolsa::class);
     }
+
+    public function ventas(): HasMany
+    {
+        return $this->hasMany(Venta::class);
+    }
 }

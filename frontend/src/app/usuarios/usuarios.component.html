@@ -1,0 +1,217 @@
+<div class="mb-6">
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <div class="flex items-center gap-2">
+      <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-100 text-primary-700">
+        <i class="bi bi-people"></i>
+      </span>
+      <div>
+        <h4 class="text-xl font-bold text-gray-900">Usuarios</h4>
+        <p class="text-sm text-gray-500">Crea y administra las credenciales del personal</p>
+      </div>
+    </div>
+    <button
+      class="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-300"
+      (click)="abrirCrear()"
+    >
+      <i class="bi bi-plus-lg"></i> Nuevo usuario
+    </button>
+  </div>
+</div>
+
+@if (error) {
+  <div class="mb-3 flex items-center justify-between gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+    <span>{{ error }}</span>
+    <button class="rounded-md px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-100" (click)="error = ''">Cerrar</button>
+  </div>
+}
+@if (mensaje) {
+  <div class="mb-3 flex items-center justify-between gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+    <span>{{ mensaje }}</span>
+    <button class="rounded-md px-2 py-1 text-xs font-medium text-emerald-600 hover:bg-emerald-100" (click)="mensaje = ''">Cerrar</button>
+  </div>
+}
+
+<div class="hidden overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm md:block">
+  <table class="w-full min-w-[640px] text-left text-sm">
+    <thead class="bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
+      <tr>
+        <th class="px-4 py-3 font-semibold">Usuario</th>
+        <th class="px-4 py-3 font-semibold">Correo</th>
+        <th class="px-4 py-3 font-semibold">Rol</th>
+        <th class="px-4 py-3 font-semibold">Creado</th>
+        <th class="px-4 py-3 text-right font-semibold">Acciones</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-gray-100 bg-white">
+      @for (u of usuarios; track u.id) {
+        <tr class="transition-colors hover:bg-primary-50">
+          <td class="px-4 py-3">
+            <div class="flex items-center gap-3">
+              <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-100 text-xs font-bold text-primary-700">
+                {{ iniciales(u.name) }}
+              </span>
+              <span class="font-semibold text-gray-800">{{ u.name }}</span>
+            </div>
+          </td>
+          <td class="px-4 py-3 text-gray-600">{{ u.email }}</td>
+          <td class="px-4 py-3">
+            <span class="inline-block rounded-full px-2.5 py-0.5 text-xs font-medium {{ rolClass(u.role) }}">{{ rolLabel(u.role) }}</span>
+          </td>
+          <td class="px-4 py-3 text-gray-600">{{ fmtFecha(u.created_at) }}</td>
+          <td class="px-4 py-3 text-right">
+            <div class="flex items-center justify-end gap-1.5">
+              <button
+                class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-primary-300 text-primary-600 transition-colors hover:bg-primary-50"
+                (click)="abrirEditar(u)"
+                title="Editar usuario"
+              >
+                <i class="bi bi-pencil"></i>
+              </button>
+              <button
+                class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-red-300 text-red-600 transition-colors hover:bg-red-50"
+                (click)="eliminar(u)"
+                title="Eliminar usuario"
+              >
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+      } @empty {
+        <tr>
+          <td colspan="5" class="px-4 py-8 text-center text-gray-400">Aún no hay usuarios registrados.</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>
+
+<div class="space-y-3 md:hidden">
+  @for (u of usuarios; track u.id) {
+    <div class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+      <div class="flex items-start justify-between gap-2">
+        <div class="flex min-w-0 items-center gap-3">
+          <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-100 text-sm font-bold text-primary-700">
+            {{ iniciales(u.name) }}
+          </span>
+          <div class="min-w-0">
+            <p class="truncate font-semibold text-gray-900">{{ u.name }}</p>
+            <p class="truncate text-xs text-gray-500">{{ u.email }}</p>
+          </div>
+        </div>
+        <span class="shrink-0 inline-block rounded-full px-2.5 py-0.5 text-xs font-medium {{ rolClass(u.role) }}">{{ rolLabel(u.role) }}</span>
+      </div>
+      <p class="mt-2 text-xs text-gray-400">Creado el {{ fmtFecha(u.created_at) }}</p>
+      <div class="mt-3 flex gap-2">
+        <button
+          class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-primary-300 text-primary-600 transition-colors hover:bg-primary-50"
+          (click)="abrirEditar(u)"
+          title="Editar usuario"
+        >
+          <i class="bi bi-pencil"></i>
+        </button>
+        <button
+          class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-red-300 text-red-600 transition-colors hover:bg-red-50"
+          (click)="eliminar(u)"
+          title="Eliminar usuario"
+        >
+          <i class="bi bi-trash"></i>
+        </button>
+      </div>
+    </div>
+  } @empty {
+    <div class="rounded-xl border border-dashed border-gray-300 bg-white px-4 py-10 text-center text-sm text-gray-400">
+      Aún no hay usuarios registrados.
+    </div>
+  }
+</div>
+
+<!-- Modal crear/editar -->
+@if (mostrarModal) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+    <div class="max-h-[calc(100vh-2rem)] w-full max-w-lg overflow-y-auto rounded-2xl bg-white shadow-xl">
+      <div class="border-b border-gray-200 px-5 py-4">
+        <h5 class="text-base font-bold text-gray-900">{{ editando ? 'Editar usuario' : 'Nuevo usuario' }}</h5>
+        <p class="text-xs text-gray-500">{{ editando ? 'Puedes actualizar sus datos o asignar una nueva contraseña.' : 'Las credenciales que crees podrás dárselas al personal.' }}</p>
+      </div>
+      <div class="space-y-4 p-5">
+        @if (error) {
+          <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{{ error }}</div>
+        }
+        <div>
+          <label class="mb-1 block text-sm font-medium text-gray-700">Nombre completo *</label>
+          <input class="input-primary" [(ngModel)]="formNombre" placeholder="Ej: María Rodríguez" [class.input-error]="errVisible(errores['name'], formNombre, intentado)" />
+          @if (errVisible(errores['name'], formNombre, intentado)) {
+            <div class="campo-error">{{ errores['name'] }}</div>
+          }
+        </div>
+        <div>
+          <label class="mb-1 block text-sm font-medium text-gray-700">Correo electrónico *</label>
+          <input class="input-primary" type="email" [(ngModel)]="formEmail" placeholder="maria@everly.com" [class.input-error]="errVisible(errores['email'], formEmail, intentado)" />
+          @if (errVisible(errores['email'], formEmail, intentado)) {
+            <div class="campo-error">{{ errores['email'] }}</div>
+          }
+        </div>
+        <div>
+          <label class="mb-1 block text-sm font-medium text-gray-700">Rol</label>
+          <select class="input-primary" [(ngModel)]="formRol" [class.input-error]="errVisible(errores['role'], formRol, intentado)">
+            @for (r of roles; track r.value) {
+              <option [ngValue]="r.value">{{ r.label }}</option>
+            }
+          </select>
+          @if (errVisible(errores['role'], formRol, intentado)) {
+            <div class="campo-error">{{ errores['role'] }}</div>
+          }
+        </div>
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <label class="mb-1 block text-sm font-medium text-gray-700">
+              Contraseña {{ editando ? '(nueva, opcional)' : '*' }}
+            </label>
+            <div class="relative">
+              <input class="input-primary pr-10" [type]="verPassword ? 'text' : 'password'" [(ngModel)]="formPassword" placeholder="{{ editando ? 'Dejar vacía = mantener' : 'Mínimo 8 caracteres' }}" [class.input-error]="errVisible(errores['password'], formPassword, intentado)" />
+              <button
+                type="button"
+                class="absolute right-2 top-1/2 -translate-y-1/2 flex h-6 w-6 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+                (click)="verPassword = !verPassword"
+                [title]="verPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+              >
+                <i [class]="verPassword ? 'bi bi-eye-slash' : 'bi bi-eye'"></i>
+              </button>
+            </div>
+            @if (errVisible(errores['password'], formPassword, intentado)) {
+              <div class="campo-error">{{ errores['password'] }}</div>
+            }
+          </div>
+          <div>
+            <label class="mb-1 block text-sm font-medium text-gray-700">Confirmar contraseña</label>
+            <div class="relative">
+              <input class="input-primary pr-10" [type]="verPassword2 ? 'text' : 'password'" [(ngModel)]="formPassword2" placeholder="Repite la contraseña" [class.input-error]="errVisible(errores['confirmar_password'], formPassword2, intentado)" />
+              <button
+                type="button"
+                class="absolute right-2 top-1/2 -translate-y-1/2 flex h-6 w-6 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+                (click)="verPassword2 = !verPassword2"
+                [title]="verPassword2 ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+              >
+                <i [class]="verPassword2 ? 'bi bi-eye-slash' : 'bi bi-eye'"></i>
+              </button>
+            </div>
+            @if (errVisible(errores['confirmar_password'], formPassword2, intentado)) {
+              <div class="campo-error">{{ errores['confirmar_password'] }}</div>
+            }
+          </div>
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 border-t border-gray-200 px-5 py-4">
+        <button class="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-200" (click)="mostrarModal = false">Cancelar</button>
+        <button
+          class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-60"
+          (click)="guardar()"
+          [disabled]="cargando"
+        >
+          {{ cargando ? 'Guardando…' : 'Guardar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

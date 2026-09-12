@@ -27,29 +27,4 @@ class Casillero extends Model
     {
         return $this->bolsas()->whereNotNull('posicion')->count();
     }
-
-    public function getEspaciosDisponiblesAttribute(): int
-    {
-        return max(0, $this->capacidad - $this->bolsas_activas);
-    }
-
-    public function getEstadoAttribute(): string
-    {
-        $activas = $this->bolsas_activas;
-
-        if ($activas >= $this->capacidad) {
-            return 'Lleno';
-        }
-
-        if ($activas >= (int) ceil($this->capacidad * 0.8)) {
-            return 'Casi lleno';
-        }
-
-        return 'Disponible';
-    }
-
-    public function scopeActivos($query)
-    {
-        return $query->where('activo', true);
-    }
 }

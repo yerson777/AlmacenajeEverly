@@ -1,12 +1,99 @@
 <div class="mb-6">
-  <div class="flex items-center gap-2">
-    <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-100 text-primary-700">
-      <i class="bi bi-clock-history"></i>
-    </span>
-    <div>
-      <h4 class="text-xl font-bold text-gray-900">Movimientos</h4>
-      <p class="text-sm text-gray-500">Historial de almacenamiento, movimientos y entregas</p>
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <div class="flex items-center gap-2">
+      <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-100 text-primary-700">
+        <i class="bi bi-clock-history"></i>
+      </span>
+      <div>
+        <h4 class="text-xl font-bold text-gray-900">Movimientos</h4>
+        <p class="text-sm text-gray-500">Historial de almacenamiento, movimientos y entregas</p>
+      </div>
     </div>
+  </div>
+
+  <div class="mt-4 flex flex-wrap items-center gap-2">
+    <div class="relative min-w-0 flex-1 sm:max-w-xs">
+      <i class="bi bi-search pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400"></i>
+      <input
+        class="input-primary pl-9"
+        [(ngModel)]="q"
+        placeholder="Buscar por código de bolsa…"
+      />
+      @if (q) {
+        <button class="absolute right-2 top-1/2 -translate-y-1/2 rounded-md px-1.5 py-0.5 text-xs text-gray-400 hover:bg-gray-100 hover:text-gray-600" (click)="q = ''" title="Limpiar">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      }
+    </div>
+
+    <button
+      (click)="setFiltroTipo('')"
+      [class.bg-primary-100]="filtroTipo === ''"
+      [class.text-primary-800]="filtroTipo === ''"
+      [class.shadow-inner]="filtroTipo === ''"
+      [class.ring-2]="filtroTipo === ''"
+      [class.ring-primary-200]="filtroTipo === ''"
+      [class.border-transparent]="filtroTipo === ''"
+      [class.bg-white]="filtroTipo !== ''"
+      [class.border-primary-300]="filtroTipo !== ''"
+      [class.text-primary-600]="filtroTipo !== ''"
+      [class.shadow-sm]="filtroTipo !== ''"
+      [class.hover:bg-primary-50]="filtroTipo !== ''"
+      class="inline-flex items-center gap-1.5 rounded-lg border px-3.5 py-2 text-sm font-semibold transition-all"
+    >
+      Todos <span class="text-xs opacity-70">{{ movimientos.length }}</span>
+    </button>
+    <button
+      (click)="setFiltroTipo('Almacenada')"
+      [class.bg-sky-100]="filtroTipo === 'Almacenada'"
+      [class.text-sky-800]="filtroTipo === 'Almacenada'"
+      [class.shadow-inner]="filtroTipo === 'Almacenada'"
+      [class.ring-2]="filtroTipo === 'Almacenada'"
+      [class.ring-sky-200]="filtroTipo === 'Almacenada'"
+      [class.border-transparent]="filtroTipo === 'Almacenada'"
+      [class.bg-white]="filtroTipo !== 'Almacenada'"
+      [class.border-sky-300]="filtroTipo !== 'Almacenada'"
+      [class.text-sky-700]="filtroTipo !== 'Almacenada'"
+      [class.shadow-sm]="filtroTipo !== 'Almacenada'"
+      [class.hover:bg-sky-50]="filtroTipo !== 'Almacenada'"
+      class="inline-flex items-center gap-1.5 rounded-lg border px-3.5 py-2 text-sm font-semibold transition-all"
+    >
+      <i class="bi bi-box-seam"></i> Almacenadas <span class="text-xs opacity-70">{{ contarTipo('Almacenada') }}</span>
+    </button>
+    <button
+      (click)="setFiltroTipo('Entregada')"
+      [class.bg-emerald-100]="filtroTipo === 'Entregada'"
+      [class.text-emerald-800]="filtroTipo === 'Entregada'"
+      [class.shadow-inner]="filtroTipo === 'Entregada'"
+      [class.ring-2]="filtroTipo === 'Entregada'"
+      [class.ring-emerald-200]="filtroTipo === 'Entregada'"
+      [class.border-transparent]="filtroTipo === 'Entregada'"
+      [class.bg-white]="filtroTipo !== 'Entregada'"
+      [class.border-emerald-300]="filtroTipo !== 'Entregada'"
+      [class.text-emerald-700]="filtroTipo !== 'Entregada'"
+      [class.shadow-sm]="filtroTipo !== 'Entregada'"
+      [class.hover:bg-emerald-50]="filtroTipo !== 'Entregada'"
+      class="inline-flex items-center gap-1.5 rounded-lg border px-3.5 py-2 text-sm font-semibold transition-all"
+    >
+      <i class="bi bi-check2-circle"></i> Entregadas <span class="text-xs opacity-70">{{ contarTipo('Entregada') }}</span>
+    </button>
+    <button
+      (click)="setFiltroTipo('Movida')"
+      [class.bg-amber-100]="filtroTipo === 'Movida'"
+      [class.text-amber-800]="filtroTipo === 'Movida'"
+      [class.shadow-inner]="filtroTipo === 'Movida'"
+      [class.ring-2]="filtroTipo === 'Movida'"
+      [class.ring-amber-200]="filtroTipo === 'Movida'"
+      [class.border-transparent]="filtroTipo === 'Movida'"
+      [class.bg-white]="filtroTipo !== 'Movida'"
+      [class.border-amber-300]="filtroTipo !== 'Movida'"
+      [class.text-amber-700]="filtroTipo !== 'Movida'"
+      [class.shadow-sm]="filtroTipo !== 'Movida'"
+      [class.hover:bg-amber-50]="filtroTipo !== 'Movida'"
+      class="inline-flex items-center gap-1.5 rounded-lg border px-3.5 py-2 text-sm font-semibold transition-all"
+    >
+      <i class="bi bi-arrow-repeat"></i> Movidas <span class="text-xs opacity-70">{{ contarTipo('Movida') }}</span>
+    </button>
   </div>
 </div>
 
@@ -21,6 +108,19 @@
 }
 
 @if (!cargando && !error) {
+  @if (q || filtroTipo) {
+    <div class="mb-3 flex items-center gap-2 rounded-lg border border-primary-200 bg-primary-50 px-4 py-2 text-sm text-primary-700">
+      <i class="bi bi-funnel"></i>
+      <span>Resultados: {{ movimientosVisibles.length }} de {{ movimientos.length }}
+        @if (filtroTipo) {· tipo <strong>{{ filtroTipo }}</strong>}
+        @if (q) {· bolsa "<strong>{{ q }}</strong>"}
+      </span>
+      <button
+        class="ml-auto rounded-md px-2 py-1 text-xs font-medium text-primary-600 hover:bg-primary-100"
+        (click)="q = ''; filtroTipo = ''"
+      >Limpiar filtros</button>
+    </div>
+  }
   <div class="hidden overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm md:block">
     <table class="w-full min-w-[720px] text-left text-sm">
       <thead class="bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
@@ -34,7 +134,7 @@
         </tr>
       </thead>
       <tbody class="divide-y divide-gray-100 bg-white">
-        @for (m of movimientos; track m.id) {
+        @for (m of movimientosVisibles; track m.id) {
           <tr class="transition-colors hover:bg-primary-50">
             <td class="px-4 py-3 text-gray-600">{{ m.fecha | date: 'dd/MM/yyyy HH:mm' }}</td>
             <td class="px-4 py-3"><code class="rounded bg-gray-100 px-1.5 py-0.5 text-xs font-medium text-gray-700">{{ m.bolsa?.codigo }}</code></td>
@@ -63,7 +163,7 @@
   </div>
 
   <div class="space-y-3 md:hidden">
-    @for (m of movimientos; track m.id) {
+    @for (m of movimientosVisibles; track m.id) {
       <div class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
         <div class="flex items-start justify-between gap-2">
           <div class="min-w-0">

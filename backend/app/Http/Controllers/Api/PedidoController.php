@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\PedidoRequest;
 use App\Models\Pedido;
+use App\Models\Venta;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -14,7 +16,7 @@ class PedidoController extends Controller
         $query = Pedido::with('clienta:id,nombre')->latest();
 
         if ($request->has('q') && $request->input('q') !== '') {
-            $q = $request->input('q');
+            $q = trim((string) $request->input('q'));
             $query->where(function ($inner) use ($q) {
                 $inner->where('codigo', 'like', "%{$q}%")
                     ->orWhereHas('clienta', fn ($c) => $c->where('nombre', 'like', "%{$q}%"));
@@ -25,21 +27,28 @@ class PedidoController extends Controller
             $query->where('clienta_id', $request->input('clienta_id'));
         }
 
-        $pedidos = $query->paginate(50);
+        $pedidos = $query->with(['clienta', 'ventas' => fn ($q) => $q->orderByDesc('id')])->paginate(50);
+
+        $pedidos->getCollection()->transform(function (Pedido $pedido) {
+            $ventaActiva = $pedido->ventas->firstWhere('estado', '!=', Venta::ESTADO_ANULADA);
+
+            $pedido->setAttribute('venta_activa', $ventaActiva ? [
+                'id' => $ventaActiva->id,
+                'monto' => round((float) $ventaActiva->monto, 2),
+                'fardo_id' => $ventaActiva->fardo_id,
+                'fecha' => $ventaActiva->fecha?->format('Y-m-d'),
+            ] : null);
+            unset($pedido->ventas);
+
+            return $pedido;
+        });
 
         return response()->json($pedidos);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(PedidoRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'clienta_id' => 'required|exists:clientas,id',
-            'codigo' => 'nullable|string|max:20|unique:pedidos,codigo',
-            'fecha' => 'nullable|date',
-            'total' => 'nullable|numeric|min:0',
-            'estado' => 'nullable|string|max:50',
-            'observaciones' => 'nullable|string|max:500',
-        ]);
+        $data = $request->validated();
 
         $data['codigo'] = $data['codigo'] ?? $this->generarCodigo();
         $data['fecha'] = $data['fecha'] ?? now()->toDateString();
@@ -57,16 +66,9 @@ class PedidoController extends Controller
         return response()->json(['data' => $pedido]);
     }
 
-    public function update(Request $request, Pedido $pedido): JsonResponse
+    public function update(PedidoRequest $request, Pedido $pedido): JsonResponse
     {
-        $data = $request->validate([
-            'clienta_id' => 'sometimes|required|exists:clientas,id',
-            'codigo' => 'nullable|string|max:20|unique:pedidos,codigo,' . $pedido->id,
-            'fecha' => 'nullable|date',
-            'total' => 'nullable|numeric|min:0',
-            'estado' => 'nullable|string|max:50',
-            'observaciones' => 'nullable|string|max:500',
-        ]);
+        $data = $request->validated();
 
         $pedido->update($data);
 
@@ -75,12 +77,18 @@ class PedidoController extends Controller
 
     public function destroy(Pedido $pedido): JsonResponse
     {
+        if ($pedido->bolsas()->exists()) {
+            return response()->json([
+                'message' => 'No se puede eliminar el pedido porque tiene bolsas asociadas.',
+            ], 422);
+        }
+
         $pedido->delete();
 
         return response()->json(['message' => 'Pedido eliminado.']);
     }
 
-    public function generarCodigo(): string
+    private function generarCodigo(): string
     {
         $ultimo = Pedido::latest('id')->value('codigo');
         $numero = $ultimo ? ((int) substr($ultimo, -3)) + 1 : 1;

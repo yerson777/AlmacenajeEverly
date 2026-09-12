@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\CasilleroRequest;
 use App\Models\Bolsa;
 use App\Models\Casillero;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class CasilleroController extends Controller
 {
@@ -28,9 +28,9 @@ class CasilleroController extends Controller
         return response()->json(['data' => $casilleros]);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(CasilleroRequest $request): JsonResponse
     {
-        $data = $this->validateData($request);
+        $data = $request->validated();
 
         $casillero = Casillero::create($data);
 
@@ -46,9 +46,9 @@ class CasilleroController extends Controller
         return response()->json(['data' => $this->serialize($casillero)]);
     }
 
-    public function update(Request $request, Casillero $casillero): JsonResponse
+    public function update(CasilleroRequest $request, Casillero $casillero): JsonResponse
     {
-        $data = $this->validateData($request, $casillero->id);
+        $data = $request->validated();
 
         if (isset($data['capacidad']) && $data['capacidad'] < $casillero->bolsas_activas) {
             return response()->json([
@@ -139,17 +139,5 @@ class CasilleroController extends Controller
         }
 
         return 'Disponible';
-    }
-
-    protected function validateData(Request $request, ?int $ignoreId = null): array
-    {
-        $rules = [
-            'codigo' => 'required|string|max:20|unique:casilleros,codigo' . ($ignoreId ? ",{$ignoreId}" : ''),
-            'descripcion' => 'nullable|string|max:255',
-            'capacidad' => 'nullable|integer|min:1|max:30',
-            'activo' => 'nullable|boolean',
-        ];
-
-        return $request->validate($rules);
     }
 }

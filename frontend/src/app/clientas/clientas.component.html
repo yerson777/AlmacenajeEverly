@@ -138,76 +138,147 @@
 <!-- Detalle -->
 @if (detalle) {
   <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-    <div class="max-h-[calc(100vh-2rem)] w-full max-w-2xl overflow-y-auto rounded-xl bg-white shadow-xl">
-      <div class="flex items-center justify-between border-b border-gray-200 px-5 py-4">
-        <h5 class="text-base font-bold text-gray-900">{{ detalle.nombre }}</h5>
-        <button class="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600" (click)="detalle = null">
+    <div class="max-h-[calc(100vh-2rem)] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white shadow-xl">
+      <div class="relative overflow-hidden rounded-t-2xl bg-gradient-to-r from-fuchsia-600 via-purple-600 to-indigo-600 px-5 py-6">
+        <div class="pointer-events-none absolute -right-10 -top-16 h-44 w-44 rounded-full bg-white/10 blur-2xl"></div>
+        <div class="pointer-events-none absolute -bottom-20 right-24 h-40 w-40 rounded-full bg-white/10 blur-2xl"></div>
+        <button
+          class="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-lg bg-white/15 text-white transition-colors hover:bg-white/25"
+          (click)="detalle = null"
+          title="Cerrar"
+        >
           <i class="bi bi-x-lg"></i>
         </button>
+        <div class="flex items-center gap-4">
+          <span class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-white/25 bg-white/15 text-xl font-bold text-white backdrop-blur">
+            {{ iniciales(detalle.nombre) }}
+          </span>
+          <div class="min-w-0">
+            <p class="text-xs font-semibold uppercase tracking-widest text-white/70">Ficha de clienta</p>
+            <h5 class="truncate text-2xl font-bold text-white">{{ detalle.nombre }}</h5>
+          </div>
+          <span class="ml-auto shrink-0 rounded-full bg-teal-400 px-3 py-1 text-xs font-semibold text-teal-950">
+            <i class="bi bi-chat-square-text mr-1"></i>{{ (detalle.notas ? 'Con notas' : 'Sin notas') }}
+          </span>
+        </div>
       </div>
-      <div class="p-5 text-sm">
-        <p class="mb-2"><strong class="text-gray-700">Teléfono:</strong> {{ detalle.telefono || '—' }}</p>
-        <p class="mb-2"><strong class="text-gray-700">Correo:</strong> {{ detalle.email || '—' }}</p>
-        <p class="mb-4"><strong class="text-gray-700">Dirección:</strong> {{ detalle.direccion || '—' }}</p>
 
-        <h6 class="mb-3 text-sm font-semibold text-gray-800">Pedidos</h6>
+      <div class="relative z-10 -mt-6 grid grid-cols-2 gap-3 px-5 lg:grid-cols-4">
+        <div class="rounded-xl border border-gray-200 bg-white p-3 shadow-sm">
+          <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-teal-100 text-teal-600"><i class="bi bi-telephone"></i></span>
+          <p class="mt-2 text-xs text-gray-400">Teléfono</p>
+          <p class="truncate text-sm font-bold text-gray-900">{{ detalle.telefono || '—' }}</p>
+        </div>
+        <div class="rounded-xl border border-gray-200 bg-white p-3 shadow-sm">
+          <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-sky-100 text-sky-600"><i class="bi bi-envelope"></i></span>
+          <p class="mt-2 text-xs text-gray-400">Correo</p>
+          <p class="truncate text-sm font-bold text-gray-900">{{ detalle.email || '—' }}</p>
+        </div>
+        <div class="rounded-xl border border-gray-200 bg-white p-3 shadow-sm">
+          <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-100 text-purple-600"><i class="bi bi-geo-alt"></i></span>
+          <p class="mt-2 text-xs text-gray-400">Dirección</p>
+          <p class="truncate text-sm font-bold text-gray-900">{{ detalle.direccion || '—' }}</p>
+        </div>
+        <div class="rounded-xl border border-gray-200 bg-white p-3 shadow-sm">
+          <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-fuchsia-100 text-fuchsia-600"><i class="bi bi-receipt"></i></span>
+          <p class="mt-2 text-xs text-gray-400">Pedidos</p>
+          <p class="text-sm font-bold text-gray-900">{{ totalPedidos }} <span class="text-xs font-normal text-gray-400">({{ pedidosCompletados }} completados)</span></p>
+        </div>
+      </div>
+
+      <div class="p-5">
+        <div class="mb-6 grid grid-cols-2 gap-3">
+          <div class="flex items-center gap-3 rounded-xl border border-amber-100 bg-amber-50 p-3">
+            <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-100 text-amber-600"><i class="bi bi-bag"></i></span>
+            <div>
+              <p class="text-xl font-bold text-amber-700">{{ bolsasActivas }}</p>
+              <p class="text-xs text-amber-600">Bolsas en almacén</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-3 rounded-xl border border-emerald-100 bg-emerald-50 p-3">
+            <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-100 text-emerald-600"><i class="bi bi-box-arrow-right"></i></span>
+            <div>
+              <p class="text-xl font-bold text-emerald-700">{{ bolsasEntregadas }}</p>
+              <p class="text-xs text-emerald-600">Bolsas entregadas</p>
+            </div>
+          </div>
+        </div>
+
+        @if (detalle.notas) {
+          <div class="mb-5 rounded-xl border border-gray-200 bg-gray-50 p-4">
+            <p class="mb-1 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-gray-500">
+              <i class="bi bi-sticky text-primary-600"></i> Notas
+            </p>
+            <p class="text-sm text-gray-700">{{ detalle.notas }}</p>
+          </div>
+        }
+
+        <h6 class="mb-4 flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-gray-700">
+          <i class="bi bi-receipt-cutoff text-purple-600"></i> Pedidos ({{ totalPedidos }})
+        </h6>
         @if (detalle.pedidos && detalle.pedidos.length > 0) {
-          <div class="mb-5 overflow-x-auto rounded-lg border border-gray-200">
+          <div class="mb-6 overflow-x-auto rounded-xl border border-gray-200">
             <table class="w-full text-left text-sm">
               <thead class="bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
                 <tr>
-                  <th class="px-3 py-2 font-semibold">Código</th>
-                  <th class="px-3 py-2 font-semibold">Fecha</th>
-                  <th class="px-3 py-2 font-semibold">Total</th>
-                  <th class="px-3 py-2 font-semibold">Estado</th>
+                  <th class="px-4 py-3 font-semibold">Código</th>
+                  <th class="px-4 py-3 font-semibold">Fecha</th>
+                  <th class="px-4 py-3 text-right font-semibold">Total</th>
+                  <th class="px-4 py-3 font-semibold">Estado</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-gray-100">
                 @for (p of detalle.pedidos; track p.id) {
-                  <tr>
-                    <td class="px-3 py-2 text-gray-600">{{ p.codigo }}</td>
-                    <td class="px-3 py-2 text-gray-600">{{ p.fecha }}</td>
-                    <td class="px-3 py-2 font-medium text-gray-800">{{ p.total ? 'Bs ' + p.total : '—' }}</td>
-                    <td class="px-3 py-2 text-gray-600">{{ p.estado }}</td>
+                  <tr class="transition-colors hover:bg-purple-50">
+                    <td class="px-4 py-3"><code class="rounded bg-gray-100 px-1.5 py-0.5 text-xs font-medium text-gray-700">{{ p.codigo }}</code></td>
+                    <td class="px-4 py-3 text-gray-600">{{ fmtFecha(p.fecha) }}</td>
+                    <td class="px-4 py-3 text-right font-semibold text-gray-900">{{ fmtMoney(p.total) }}</td>
+                    <td class="px-4 py-3">
+                      <span class="inline-block rounded-full px-2.5 py-0.5 text-xs font-medium {{ pedidoEstadoClass(p.estado) }}">{{ p.estado }}</span>
+                    </td>
                   </tr>
                 }
               </tbody>
             </table>
           </div>
         } @else {
-          <p class="mb-5 text-sm text-gray-400">Sin pedidos registrados.</p>
+          <div class="mb-6 rounded-xl border border-dashed border-gray-300 px-4 py-6 text-center text-sm text-gray-400">Sin pedidos registrados.</div>
         }
 
-        <h6 class="mb-3 text-sm font-semibold text-gray-800">Bolsas</h6>
+        <h6 class="mb-4 flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-gray-700">
+          <i class="bi bi-bag text-fuchsia-600"></i> Bolsas ({{ detalle.bolsas?.length ?? 0 }})
+        </h6>
         @if (detalle.bolsas && detalle.bolsas.length > 0) {
-          <div class="overflow-x-auto rounded-lg border border-gray-200">
+          <div class="overflow-x-auto rounded-xl border border-gray-200">
             <table class="w-full text-left text-sm">
               <thead class="bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
                 <tr>
-                  <th class="px-3 py-2 font-semibold">Código</th>
-                  <th class="px-3 py-2 font-semibold">Ubicación</th>
-                  <th class="px-3 py-2 font-semibold">Estado</th>
+                  <th class="px-4 py-3 font-semibold">Código</th>
+                  <th class="px-4 py-3 font-semibold">Ubicación</th>
+                  <th class="px-4 py-3 font-semibold">Estado</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-gray-100">
                 @for (b of detalle.bolsas; track b.id) {
-                  <tr>
-                    <td class="px-3 py-2"><code class="rounded bg-gray-100 px-1.5 py-0.5 text-xs font-medium text-gray-700">{{ b.codigo }}</code></td>
-                    <td class="px-3 py-2 text-gray-600">
+                  <tr class="transition-colors hover:bg-fuchsia-50">
+                    <td class="px-4 py-3"><code class="rounded bg-gray-100 px-1.5 py-0.5 text-xs font-medium text-gray-700">{{ b.codigo }}</code></td>
+                    <td class="px-4 py-3">
                       @if (b.casillero && b.posicion != null && b.estado !== 'Entregada') {
-                        {{ b.casillero.codigo }} / {{ pad(b.posicion!) }}
+                        <span class="inline-block rounded-full bg-primary-600 px-2.5 py-0.5 text-xs font-medium text-white">{{ b.casillero.codigo }} / {{ pad(b.posicion!) }}</span>
                       } @else {
                         <span class="text-gray-400">Liberada</span>
                       }
                     </td>
-                    <td class="px-3 py-2 text-gray-600">{{ b.estado }}</td>
+                    <td class="px-4 py-3">
+                      <span class="inline-block rounded-full px-2.5 py-0.5 text-xs font-medium {{ bolsaEstadoClass(b.estado) }}">{{ b.estado }}</span>
+                    </td>
                   </tr>
                 }
               </tbody>
             </table>
           </div>
         } @else {
-          <p class="text-sm text-gray-400">Sin bolsas registradas.</p>
+          <div class="rounded-xl border border-dashed border-gray-300 px-4 py-6 text-center text-sm text-gray-400">Sin bolsas registradas.</div>
         }
       </div>
       <div class="flex justify-end border-t border-gray-200 px-5 py-4">
@@ -233,23 +304,59 @@
         }
         <div>
           <label class="mb-1 block text-sm font-medium text-gray-700">Nombre *</label>
-          <input class="input-primary" [(ngModel)]="formNombre" />
+          <input
+            class="input-primary"
+            [(ngModel)]="formNombre"
+            maxlength="255"
+            [class.input-error]="errVisible(errores['nombre'], formNombre, intentado)"
+            placeholder="Nombre y apellido"
+          />
+          @if (errVisible(errores['nombre'], formNombre, intentado)) {
+            <div class="campo-error">{{ errores['nombre'] }}</div>
+          }
+          <p class="mt-1 text-xs text-gray-400">Solo se permiten letras y espacios.</p>
         </div>
         <div>
           <label class="mb-1 block text-sm font-medium text-gray-700">Teléfono</label>
-          <input class="input-primary" [(ngModel)]="formTelefono" />
+          <input
+            class="input-primary"
+            [(ngModel)]="formTelefono"
+            maxlength="8"
+            inputmode="numeric"
+            [class.input-error]="errVisible(errores['telefono'], formTelefono, intentado)"
+            placeholder="8 dígitos"
+          />
+          @if (errVisible(errores['telefono'], formTelefono, intentado)) {
+            <div class="campo-error">{{ errores['telefono'] }}</div>
+          }
+          <p class="mt-1 text-xs text-gray-400">Debe tener exactamente 8 dígitos.</p>
         </div>
         <div>
           <label class="mb-1 block text-sm font-medium text-gray-700">Correo</label>
-          <input class="input-primary" [(ngModel)]="formEmail" />
+          <input
+            class="input-primary"
+            [(ngModel)]="formEmail"
+            maxlength="255"
+            type="email"
+            [class.input-error]="errVisible(errores['email'], formEmail, intentado)"
+          />
+          @if (errVisible(errores['email'], formEmail, intentado)) {
+            <div class="campo-error">{{ errores['email'] }}</div>
+          }
         </div>
         <div>
           <label class="mb-1 block text-sm font-medium text-gray-700">Dirección</label>
-          <input class="input-primary" [(ngModel)]="formDireccion" />
+          <input class="input-primary" [(ngModel)]="formDireccion" maxlength="255" [class.input-error]="errVisible(errores['direccion'], formDireccion, intentado)" />
+          @if (errVisible(errores['direccion'], formDireccion, intentado)) {
+            <div class="campo-error">{{ errores['direccion'] }}</div>
+          }
         </div>
         <div>
           <label class="mb-1 block text-sm font-medium text-gray-700">Notas</label>
-          <textarea class="input-primary" rows="2" [(ngModel)]="formNotas"></textarea>
+          <textarea class="input-primary" rows="2" [(ngModel)]="formNotas" maxlength="500" [class.input-error]="errVisible(errores['notas'], formNotas, intentado)"></textarea>
+          @if (errVisible(errores['notas'], formNotas, intentado)) {
+            <div class="campo-error">{{ errores['notas'] }}</div>
+          }
         </div>
       </div>
       <div class="flex justify-end gap-2 border-t border-gray-200 px-5 py-4">
@@ -260,7 +367,6 @@
         <button
           class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-60"
           (click)="guardar()"
-          [disabled]="!formNombre.trim()"
         >Guardar</button>
       </div>
     </div>
