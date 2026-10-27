@@ -2,18 +2,23 @@ import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../services/api.service';
 import { Usuario } from '../models/models';
+import { ModalErrorComponent } from '../shared/modal-error.component';
+import { aplicarErrorFormulario } from '../utils/api-errors';
 import { validarTodo, errVisible, requerido, emailOk, maxLong, minLong, Validator, ReglasPorCampo } from '../utils/validators';
+import { autoDismiss } from '../utils/auto-dismiss';
 
 @Component({
     selector: 'app-usuarios',
-    imports: [FormsModule],
+    imports: [FormsModule, ModalErrorComponent],
     changeDetection: ChangeDetectionStrategy.Eager,
     templateUrl: './usuarios.component.html'
 })
 export class UsuariosComponent implements OnInit {
   usuarios: Usuario[] = [];
   error = '';
+  errorModal = '';
   mensaje = '';
+  private mostrarMensaje = autoDismiss((m) => (this.mensaje = m));
 
   mostrarModal = false;
   editando = false;
@@ -25,7 +30,7 @@ export class UsuariosComponent implements OnInit {
   formPassword2 = '';
   verPassword = false;
   verPassword2 = false;
-  cargando = false;
+  guardando = false;
   errores: Record<string, string> = {};
   intentado = false;
   errVisible = errVisible;
@@ -95,8 +100,10 @@ export class UsuariosComponent implements OnInit {
     this.verPassword2 = false;
     this.mostrarModal = true;
     this.error = '';
+    this.errorModal = '';
     this.errores = {};
     this.intentado = false;
+    this.guardando = false;
   }
 
   abrirEditar(u: Usuario): void {
@@ -111,12 +118,24 @@ export class UsuariosComponent implements OnInit {
     this.verPassword2 = false;
     this.mostrarModal = true;
     this.error = '';
+    this.errorModal = '';
     this.errores = {};
     this.intentado = false;
+    this.guardando = false;
+  }
+
+  cerrarModal(): void {
+    this.mostrarModal = false;
+    this.errorModal = '';
+    this.errores = {};
+    this.intentado = false;
+    this.guardando = false;
   }
 
   guardar(): void {
+    if (this.guardando) return;
     this.error = '';
+    this.errorModal = '';
     this.intentado = true;
     const res = validarTodo(
       {
@@ -135,19 +154,19 @@ export class UsuariosComponent implements OnInit {
     const email = this.formEmail.trim();
 
     if (!nombre) {
-      this.error = 'El nombre es obligatorio.';
+      this.errorModal = 'El nombre es obligatorio.';
       return;
     }
     if (!email) {
-      this.error = 'El correo electrónico es obligatorio.';
+      this.errorModal = 'El correo electrónico es obligatorio.';
       return;
     }
     if (!this.editando && this.formPassword.length < 8) {
-      this.error = 'La contraseña debe tener al menos 8 caracteres.';
+      this.errorModal = 'La contraseña debe tener al menos 8 caracteres.';
       return;
     }
     if (this.formPassword && this.formPassword !== this.formPassword2) {
-      this.error = 'Las contraseñas no coinciden.';
+      this.errorModal = 'Las contraseñas no coinciden.';
       return;
     }
 
@@ -161,30 +180,19 @@ export class UsuariosComponent implements OnInit {
       payload.password_confirmation = this.formPassword2;
     }
 
-    this.cargando = true;
+    this.guardando = true;
     const request = this.editando && this.usuarioActual
       ? this.api.updateUsuario(this.usuarioActual.id, payload)
       : this.api.createUsuario(payload);
 
     request.subscribe({
       next: (res) => {
-        this.cargando = false;
-        this.mensaje = res.message;
-        this.mostrarModal = false;
+        this.guardando = false;
+        this.mostrarMensaje(res.message);
+        this.cerrarModal();
         this.cargar();
       },
-      error: (e) => {
-        this.cargando = false;
-        const errs = (e as any)?.errors;
-        if (errs && Object.keys(errs).length) {
-          this.errores = Object.fromEntries(
-            Object.entries(errs).map(([c, msgs]) => [c, Array.isArray(msgs) ? msgs[0] : String(msgs)])
-          ) as Record<string, string>;
-          this.intentado = true;
-        } else {
-          this.error = e.message;
-        }
-      },
+      error: (e) => aplicarErrorFormulario(e, this),
     });
   }
 
@@ -192,7 +200,7 @@ export class UsuariosComponent implements OnInit {
     if (!confirm(`¿Eliminar el usuario "${u.name}" (${u.email})?`)) return;
     this.api.deleteUsuario(u.id).subscribe({
       next: (res) => {
-        this.mensaje = res.message;
+        this.mostrarMensaje(res.message);
         this.cargar();
       },
       error: (e) => (this.error = e.message),

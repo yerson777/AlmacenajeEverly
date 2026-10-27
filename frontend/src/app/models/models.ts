@@ -64,6 +64,7 @@ export interface Bolsa {
   estado: string;
   observaciones: string | null;
   imagen?: string | null;
+  tiene_imagen?: boolean;
   clienta?: { id: number; nombre: string; telefono: string | null };
   pedido?: { id: number; codigo: string };
   casillero?: { id: number; codigo: string } | null;
@@ -118,6 +119,7 @@ export interface Fardo {
   ganancia: number;
   porcentaje_recuperacion: number;
   estado_recuperacion: string;
+  es_liquidacion: boolean;
   ventas?: Venta[];
 }
 
@@ -138,12 +140,15 @@ export interface Venta {
   clienta_nombre?: string | null;
   fardo_codigo?: string | null;
   fardo_categoria?: string | null;
+  fardo_es_liquidacion?: boolean;
 }
 
 export interface FormaPagoResumen {
   total: number;
   cantidad: number;
 }
+
+export type ResumenLiquidacion = FormaPagoResumen;
 
 export interface CajaStats {
   filtro: string;
@@ -169,6 +174,12 @@ export interface CajaStats {
     forma_pago: Record<string, FormaPagoResumen>;
   };
   fardos: Fardo[];
+  liquidacion: {
+    hoy: ResumenLiquidacion;
+    semana: ResumenLiquidacion;
+    mes: ResumenLiquidacion;
+    total: ResumenLiquidacion;
+  };
   ventas: Venta[];
   series: {
     diario: SerieCaja[];

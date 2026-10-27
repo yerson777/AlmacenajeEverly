@@ -16,6 +16,7 @@ class DashboardController extends Controller
         $totalClientas = Clienta::count();
 
         $bolsasAlmacenadas = Bolsa::where('estado', Bolsa::ESTADO_PENDIENTE)
+            ->whereNotNull('casillero_id')
             ->whereNotNull('posicion')
             ->count();
 
@@ -43,16 +44,19 @@ class DashboardController extends Controller
         ]);
     }
 
-    public function pendientes(): JsonResponse
+    public function pendientes(Request $request): JsonResponse
     {
-        $pendientes = Bolsa::with(['clienta:id,nombre,telefono', 'pedido:id,codigo', 'casillero:id,codigo'])
+        $query = Bolsa::with(['clienta:id,nombre,telefono', 'pedido:id,codigo', 'casillero:id,codigo'])
             ->where('estado', Bolsa::ESTADO_PENDIENTE)
-            ->whereNotNull('posicion')
+            ->orderByRaw('casillero_id is null')
             ->orderBy('casillero_id')
             ->orderBy('posicion')
-            ->get();
+            ->orderByDesc('id');
 
-        return response()->json(['data' => $pendientes]);
+        $perPage = 10;
+        $pendientes = $query->paginate($perPage);
+
+        return response()->json($pendientes);
     }
 
     public function buscar(Request $request): JsonResponse
@@ -73,9 +77,14 @@ class DashboardController extends Controller
                     ->orWhereIn('clienta_id', $clientas)
                     ->orWhereHas('pedido', fn ($p) => $p->where('codigo', 'like', "%{$q}%"));
             })
-            ->orderByDesc('estado')
+            ->orderByDesc('id')
             ->limit(50)
             ->get();
+
+        $bolsas->each(function (Bolsa $bolsa) {
+            $bolsa->setAttribute('tiene_imagen', ! empty($bolsa->imagen));
+            $bolsa->makeHidden('imagen');
+        });
 
         return response()->json(['data' => $bolsas]);
     }

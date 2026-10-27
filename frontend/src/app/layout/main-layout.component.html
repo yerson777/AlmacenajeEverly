@@ -1,14 +1,16 @@
 <div class="min-h-screen bg-gray-50">
   <!-- Sidebar escritorio -->
   <aside
-    [class.w-20]="colapsada"
-    [class.w-64]="!colapsada"
+    (mouseenter)="alEntrarMenu()"
+    (mouseleave)="alSalirMenu()"
+    [class.w-20]="menuColapsado"
+    [class.w-64]="!menuColapsado"
     class="fixed inset-y-0 left-0 z-40 hidden flex-col bg-gradient-to-b from-primary-800 via-primary-700 to-primary-600 shadow-xl transition-all duration-300 lg:flex"
   >
     <!-- Logo -->
-    <div [class.justify-center]="colapsada" class="flex items-center gap-2.5 px-4 py-5">
+    <div [class.justify-center]="menuColapsado" class="flex items-center gap-2.5 px-4 py-5">
       <img src="everly.png" alt="Everly" class="h-9 w-9 shrink-0 rounded-lg bg-white" />
-      @if (!colapsada) {
+      @if (!menuColapsado) {
         <div class="leading-tight">
           <p class="text-sm font-bold tracking-wide text-white">EVERLY</p>
           <p class="text-[11px] uppercase tracking-widest text-white/60">Almacenaje</p>
@@ -23,12 +25,12 @@
           routerLink="{{ item.route }}"
           routerLinkActive="active"
           [routerLinkActiveOptions]="{ exact: item.route === '/dashboard' }"
-          [class.justify-center]="colapsada"
-          [attr.title]="colapsada ? item.label : null"
+          [class.justify-center]="menuColapsado"
+          [attr.title]="menuColapsado ? item.label : null"
           class="nav-link flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm"
         >
           <i class="bi {{ item.icon }} shrink-0 text-lg"></i>
-          @if (!colapsada) {
+          @if (!menuColapsado) {
             <span class="truncate">{{ item.label }}</span>
           }
         </a>
@@ -37,18 +39,20 @@
 
     <!-- Pie: colapsar + usuario -->
     <div class="border-t border-white/15 p-3">
-      <button
-        (click)="alternarColapsada()"
-        [class.justify-center]="colapsada"
-        class="mb-3 flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-white/80 transition-colors hover:bg-white/10 hover:text-white"
-      >
-        <i class="bi shrink-0 text-lg" [class.bi-chevron-double-left]="!colapsada" [class.bi-chevron-double-right]="colapsada"></i>
-        @if (!colapsada) {
-          <span>Ocultar menú</span>
-        }
-      </button>
+      @if (!hoverDisponible) {
+        <button
+          (click)="alternarColapsada()"
+          [class.justify-center]="menuColapsado"
+          class="mb-3 flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-white/80 transition-colors hover:bg-white/10 hover:text-white"
+        >
+          <i class="bi shrink-0 text-lg" [class.bi-chevron-double-left]="!menuColapsado" [class.bi-chevron-double-right]="menuColapsado"></i>
+          @if (!menuColapsado) {
+            <span>Ocultar menú</span>
+          }
+        </button>
+      }
 
-      @if (colapsada) {
+      @if (menuColapsado) {
         <div class="flex flex-col items-center gap-2">
           <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/15 text-white"><i class="bi bi-person"></i></span>
           <button
@@ -138,7 +142,7 @@
   </aside>
 
   <!-- Contenido -->
-  <main [class.lg:ml-20]="colapsada" [class.lg:ml-64]="!colapsada" class="transition-all duration-300">
+  <main [class.lg:ml-20]="menuColapsado" [class.lg:ml-64]="!menuColapsado" class="transition-all duration-300">
     <!-- Barra superior móvil -->
     <header class="sticky top-0 z-30 flex items-center justify-between gap-3 bg-gradient-to-r from-primary-800 via-primary-700 to-primary-600 px-4 py-3 shadow-md lg:hidden">
       <button

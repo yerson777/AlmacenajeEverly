@@ -2,11 +2,14 @@ import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../services/api.service';
 import { Casillero, CasilleroPosicion } from '../models/models';
+import { ModalErrorComponent } from '../shared/modal-error.component';
+import { aplicarErrorFormulario } from '../utils/api-errors';
 import { validarTodo, errVisible, requerido, noSoloEspacios, maxLong, entero, positivo, ReglasPorCampo } from '../utils/validators';
+import { autoDismiss } from '../utils/auto-dismiss';
 
 @Component({
     selector: 'app-casilleros',
-    imports: [FormsModule],
+    imports: [FormsModule, ModalErrorComponent],
     changeDetection: ChangeDetectionStrategy.Eager,
     templateUrl: './casilleros.component.html'
 })
@@ -15,7 +18,9 @@ export class CasillerosComponent implements OnInit {
   posiciones: CasilleroPosicion[] = [];
   casilleroSeleccionado: Casillero | null = null;
   error = '';
+  errorModal = '';
   mensaje = '';
+  private mostrarMensaje = autoDismiss((m) => (this.mensaje = m));
 
   mostrarModal = false;
   editando = false;
@@ -25,6 +30,7 @@ export class CasillerosComponent implements OnInit {
   formActivo = true;
   errores: Record<string, string> = {};
   intentado = false;
+  guardando = false;
   errVisible = errVisible;
 
   private reglas(): ReglasPorCampo {
@@ -62,8 +68,10 @@ export class CasillerosComponent implements OnInit {
     this.formActivo = true;
     this.mostrarModal = true;
     this.error = '';
+    this.errorModal = '';
     this.errores = {};
     this.intentado = false;
+    this.guardando = false;
   }
 
   abrirEditar(c: Casillero): void {
@@ -74,12 +82,24 @@ export class CasillerosComponent implements OnInit {
     this.formActivo = c.activo;
     this.mostrarModal = true;
     this.error = '';
+    this.errorModal = '';
     this.errores = {};
     this.intentado = false;
+    this.guardando = false;
+  }
+
+  cerrarModal(): void {
+    this.mostrarModal = false;
+    this.errorModal = '';
+    this.errores = {};
+    this.intentado = false;
+    this.guardando = false;
   }
 
   guardar(): void {
+    if (this.guardando) return;
     this.error = '';
+    this.errorModal = '';
     this.intentado = true;
     const res = validarTodo(
       {
@@ -102,20 +122,14 @@ export class CasillerosComponent implements OnInit {
       ? this.api.updateCasillero(this.casilleroSeleccionado!.id, payload)
       : this.api.createCasillero(payload);
 
+    this.guardando = true;
     request.subscribe({
       next: (res) => {
-        this.mensaje = res.message;
-        this.mostrarModal = false;
+        this.mostrarMensaje(res.message);
+        this.cerrarModal();
         this.cargar();
       },
-      error: (err) => {
-        const e = err as any;
-        if (e?.errors) {
-          this.errores = e.errors;
-          this.intentado = true;
-        }
-        this.error = e.message;
-      },
+      error: (e) => aplicarErrorFormulario(e, this),
     });
   }
 
@@ -127,7 +141,7 @@ export class CasillerosComponent implements OnInit {
   cambiarEstado(c: Casillero): void {
     this.api.setCasilleroEstado(c.id, !c.activo).subscribe({
       next: (res) => {
-        this.mensaje = res.message;
+        this.mostrarMensaje(res.message);
         this.cargar();
       },
       error: (e) => (this.error = e.message),
@@ -138,7 +152,7 @@ export class CasillerosComponent implements OnInit {
     if (!confirm(`¿Eliminar el casillero ${c.codigo}?`)) return;
     this.api.deleteCasillero(c.id).subscribe({
       next: (res) => {
-        this.mensaje = res.message;
+        this.mostrarMensaje(res.message);
         this.cargar();
       },
       error: (e) => (this.error = e.message),

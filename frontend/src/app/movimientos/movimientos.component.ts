@@ -3,6 +3,9 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../services/api.service';
 import { Movimiento } from '../models/models';
+import { guardarFiltro, leerFiltro } from '../utils/filtros';
+
+type FiltroMovimiento = '' | 'Almacenada' | 'Entregada' | 'Movida';
 
 @Component({
     selector: 'app-movimientos',
@@ -15,11 +18,15 @@ export class MovimientosComponent implements OnInit {
   error = '';
   cargando = true;
   q = '';
-  filtroTipo = '';
+  filtroTipo: FiltroMovimiento = '';
+  private readonly filtrosValidos: readonly FiltroMovimiento[] = ['', 'Almacenada', 'Entregada', 'Movida'];
 
   constructor(private api: ApiService) {}
 
   ngOnInit(): void {
+    this.filtroTipo = leerFiltro('movimientos_filtro', this.filtrosValidos, '');
+    guardarFiltro('movimientos_filtro', this.filtroTipo);
+
     this.api.getMovimientos().subscribe({
       next: (res) => {
         this.movimientos = res.data;
@@ -42,7 +49,15 @@ export class MovimientosComponent implements OnInit {
   }
 
   setFiltroTipo(t: string): void {
-    this.filtroTipo = this.filtroTipo === t ? '' : t;
+    if (!this.filtrosValidos.includes(t as FiltroMovimiento)) return;
+    this.filtroTipo = this.filtroTipo === t ? '' : (t as FiltroMovimiento);
+    guardarFiltro('movimientos_filtro', this.filtroTipo);
+  }
+
+  limpiarFiltros(): void {
+    this.q = '';
+    this.filtroTipo = '';
+    guardarFiltro('movimientos_filtro', '');
   }
 
   contarTipo(t: string): number {

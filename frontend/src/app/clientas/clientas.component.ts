@@ -1,20 +1,32 @@
-import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../services/api.service';
 import { Clienta } from '../models/models';
+import { ModalErrorComponent } from '../shared/modal-error.component';
+import { aplicarErrorFormulario, mensajeError } from '../utils/api-errors';
 import { validarTodo, errVisible, requerido, soloLetras, soloDigitos, maxLong, emailOk, ReglasPorCampo } from '../utils/validators';
+import { autoDismiss } from '../utils/auto-dismiss';
+import { PeticionCancelable } from '../utils/peticion-cancelable';
+import { Subject, Subscription } from 'rxjs';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
 @Component({
     selector: 'app-clientas',
-    imports: [FormsModule],
+    imports: [FormsModule, ModalErrorComponent],
     changeDetection: ChangeDetectionStrategy.Eager,
     templateUrl: './clientas.component.html'
 })
-export class ClientasComponent implements OnInit {
+export class ClientasComponent implements OnInit, OnDestroy {
   clientas: Clienta[] = [];
   q = '';
+  private qSubject = new Subject<string>();
+  private qSub?: Subscription;
+  cargandoLista = false;
+  private readonly peticionLista = new PeticionCancelable();
   error = '';
+  errorModal = '';
   mensaje = '';
+  private mostrarMensaje = autoDismiss((m) => (this.mensaje = m));
 
   mostrarModal = false;
   editando = false;
@@ -27,7 +39,14 @@ export class ClientasComponent implements OnInit {
   formNotas = '';
   errores: Record<string, string> = {};
   intentado = false;
+  guardando = false;
   errVisible = errVisible;
+
+  pagina = 1;
+  porPagina = 10;
+  total = 0;
+  desde = 0;
+  hasta = 0;
 
   private reglas(): ReglasPorCampo {
     return {
@@ -46,21 +65,89 @@ export class ClientasComponent implements OnInit {
   constructor(private api: ApiService) {}
 
   ngOnInit(): void {
+    this.pagina = 1;
+    const guardados = localStorage.getItem('clientas_filtros');
+    if (guardados) {
+      try {
+        const g = JSON.parse(guardados);
+        if (g.q) this.q = g.q;
+      } catch {}
+    }
+
+    this.qSub = this.qSubject.pipe(debounceTime(300), distinctUntilChanged()).subscribe(() => {
+      this.pagina = 1;
+      this.guardarFiltros();
+      this.cargar();
+    });
+
     this.cargar();
   }
 
+  ngOnDestroy(): void {
+    this.peticionLista.cancelar();
+    this.qSub?.unsubscribe();
+  }
+
+  guardarFiltros(): void {
+    try {
+      localStorage.setItem('clientas_filtros', JSON.stringify({
+        pagina: this.pagina,
+        q: this.q,
+      }));
+    } catch {}
+  }
+
   cargar(): void {
-    this.api.getClientas(this.q).subscribe({
-      next: (res) => {
-        this.clientas = res.data;
+    this.cargandoLista = true;
+    this.error = '';
+    this.peticionLista.ejecutar(this.api.getClientas(this.q, this.pagina), {
+      next: (res: any) => {
+        this.clientas = res.data || [];
+        this.total = res.total || 0;
+        this.pagina = res.current_page || this.pagina;
+        this.porPagina = res.per_page || this.porPagina;
+        if (this.total === 0) {
+          this.desde = 0;
+          this.hasta = 0;
+        } else {
+          this.desde = (this.pagina - 1) * this.porPagina + 1;
+          this.hasta = Math.min(this.pagina * this.porPagina, this.total);
+        }
       },
-      error: (e) => (this.error = e.message),
+      error: (e) => (this.error = mensajeError(e)),
+      finalizar: () => (this.cargandoLista = false),
     });
   }
 
   buscar(): void {
     this.error = '';
+    this.pagina = 1;
+    this.guardarFiltros();
+    this.qSubject.next(this.q);
+  }
+
+  cambiarPagina(p: number): void {
+    if (p < 1 || p > this.totalPaginas()) return;
+    this.pagina = p;
+    this.guardarFiltros();
     this.cargar();
+  }
+
+  totalPaginas(): number {
+    if (this.porPagina <= 0) return 1;
+    return Math.max(1, Math.ceil(this.total / this.porPagina));
+  }
+
+  paginas(): number[] {
+    const total = this.totalPaginas();
+    const actual = this.pagina;
+    const paginas: number[] = [];
+    const inicio = Math.max(1, actual - 2);
+    const fin = Math.min(total, actual + 2);
+    for (let i = inicio; i <= fin; i++) {
+      paginas.push(i);
+    }
+    return paginas;
   }
 
   abrirCrear(): void {
@@ -72,8 +159,10 @@ export class ClientasComponent implements OnInit {
     this.formNotas = '';
     this.mostrarModal = true;
     this.error = '';
+    this.errorModal = '';
     this.errores = {};
     this.intentado = false;
+    this.guardando = false;
   }
 
   abrirEditar(c: Clienta): void {
@@ -86,12 +175,28 @@ export class ClientasComponent implements OnInit {
     this.formNotas = c.notas ?? '';
     this.mostrarModal = true;
     this.error = '';
+    this.errorModal = '';
     this.errores = {};
     this.intentado = false;
+    this.guardando = false;
+  }
+
+  onTelefonoInput(): void {
+    this.formTelefono = this.formTelefono.replace(/\D/g, '').slice(0, 8);
+  }
+
+  cerrarModal(): void {
+    this.mostrarModal = false;
+    this.errorModal = '';
+    this.errores = {};
+    this.intentado = false;
+    this.guardando = false;
   }
 
   guardar(): void {
+    if (this.guardando) return;
     this.error = '';
+    this.errorModal = '';
     this.intentado = true;
     const res = validarTodo(
       {
@@ -107,30 +212,24 @@ export class ClientasComponent implements OnInit {
     if (!res.ok) return;
 
     const payload = {
-      nombre: this.formNombre.trim(),
-      telefono: this.formTelefono.trim() || null,
-      email: this.formEmail.trim() || null,
-      direccion: this.formDireccion.trim() || null,
+      nombre: this.formNombre.trim().replace(/\s+/g, ' '),
+      telefono: this.formTelefono.replace(/[\s\-().]/g, '').trim() || null,
+      email: this.formEmail.trim().toLowerCase() || null,
+      direccion: this.formDireccion.trim().replace(/\s+/g, ' ') || null,
       notas: this.formNotas.trim() || null,
     };
     const request = this.editando && this.clientaActual
       ? this.api.updateClienta(this.clientaActual.id, payload)
       : this.api.createClienta(payload);
 
+    this.guardando = true;
     request.subscribe({
       next: (res) => {
-        this.mensaje = res.message;
-        this.mostrarModal = false;
+        this.mostrarMensaje(res.message);
+        this.cerrarModal();
         this.cargar();
       },
-      error: (err) => {
-        const e = err as any;
-        if (e?.errors) {
-          this.errores = e.errors;
-          this.intentado = true;
-        }
-        this.error = e.message;
-      },
+      error: (e) => aplicarErrorFormulario(e, this),
     });
   }
 
@@ -146,7 +245,7 @@ export class ClientasComponent implements OnInit {
     if (!confirm(`¿Eliminar a ${c.nombre}? Se eliminarán también sus pedidos y bolsas.`)) return;
     this.api.deleteClienta(c.id).subscribe({
       next: (res) => {
-        this.mensaje = res.message;
+        this.mostrarMensaje(res.message);
         this.cargar();
       },
       error: (e) => (this.error = e.message),

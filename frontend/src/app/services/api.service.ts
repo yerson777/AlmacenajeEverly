@@ -3,6 +3,7 @@ import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http'
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
+import { mensajeSeguro } from '../utils/api-errors';
 import { Bolsa, CajaStats, Casillero, CasilleroPosicion, Clienta, DashboardStats, Fardo, Movimiento, Paginated, Pedido, Usuario, Venta } from '../models/models';
 
 interface ApiError extends Error {
@@ -40,8 +41,14 @@ export class ApiService {
     return this.http.get<{ data: CasilleroPosicion[] }>(`${this.base}/casilleros/${id}/posiciones`);
   }
 
-  getClientas(q = ''): Observable<Paginated<Clienta>> {
-    const params = q ? new HttpParams().set('q', q) : undefined;
+  getClientas(q = '', page: number = 1): Observable<Paginated<Clienta>> {
+    let params = new HttpParams();
+    if (q) {
+      params = params.set('q', q);
+    }
+    if (page) {
+      params = params.set('page', String(page));
+    }
     return this.http.get<Paginated<Clienta>>(`${this.base}/clientas`, { params });
   }
 
@@ -61,12 +68,42 @@ export class ApiService {
     return this.http.delete(`${this.base}/clientas/${id}`).pipe(catchError(this.handleError));
   }
 
-  getPedidos(q = '', clientaId?: number): Observable<Paginated<Pedido>> {
-    let params = q ? new HttpParams().set('q', q) : new HttpParams();
+  getPedidos(
+    q = '',
+    clientaId?: number,
+    soloDisponibles = false,
+    tab: string = 'pendientes',
+    mes?: number | null,
+    anio?: number | null,
+    cobro?: string,
+    page: number = 1
+  ): Observable<Paginated<Pedido> & { contadores?: { pendientes: number; completados: number; todos: number } }> {
+    let params = new HttpParams();
+    if (q) {
+      params = params.set('q', q);
+    }
     if (clientaId) {
       params = params.set('clienta_id', String(clientaId));
     }
-    return this.http.get<Paginated<Pedido>>(`${this.base}/pedidos`, { params });
+    if (soloDisponibles) {
+      params = params.set('disponibles', '1');
+    }
+    if (tab) {
+      params = params.set('tab', tab);
+    }
+    if (mes) {
+      params = params.set('mes', String(mes));
+    }
+    if (anio) {
+      params = params.set('anio', String(anio));
+    }
+    if (cobro) {
+      params = params.set('cobro', cobro);
+    }
+    if (page) {
+      params = params.set('page', String(page));
+    }
+    return this.http.get<Paginated<Pedido> & { contadores?: { pendientes: number; completados: number; todos: number } }>(`${this.base}/pedidos`, { params });
   }
 
   createPedido(data: Partial<Pedido>): Observable<any> {
@@ -81,9 +118,38 @@ export class ApiService {
     return this.http.delete(`${this.base}/pedidos/${id}`).pipe(catchError(this.handleError));
   }
 
-  getBolsas(q = ''): Observable<Paginated<Bolsa>> {
-    const params = q ? new HttpParams().set('q', q) : undefined;
-    return this.http.get<Paginated<Bolsa>>(`${this.base}/bolsas`, { params });
+  getBolsas(
+    q = '',
+    tab: string = 'pendientes',
+    mes?: number | null,
+    anio?: number | null,
+    casilleroId?: number | null,
+    ubicacion?: string,
+    page: number = 1
+  ): Observable<Paginated<Bolsa> & { contadores?: { pendientes: number; entregadas: number; todos: number } }> {
+    let params = new HttpParams();
+    if (q) {
+      params = params.set('q', q);
+    }
+    if (tab) {
+      params = params.set('tab', tab);
+    }
+    if (mes) {
+      params = params.set('mes', String(mes));
+    }
+    if (anio) {
+      params = params.set('anio', String(anio));
+    }
+    if (casilleroId) {
+      params = params.set('casillero_id', String(casilleroId));
+    }
+    if (ubicacion) {
+      params = params.set('ubicacion', ubicacion);
+    }
+    if (page) {
+      params = params.set('page', String(page));
+    }
+    return this.http.get<Paginated<Bolsa> & { contadores?: { pendientes: number; entregadas: number; todos: number } }>(`${this.base}/bolsas`, { params });
   }
 
   createBolsa(data: Partial<Bolsa>): Observable<any> {
@@ -175,8 +241,12 @@ export class ApiService {
     return this.http.delete(`${this.base}/usuarios/${id}`).pipe(catchError(this.handleError));
   }
 
-  getPendientes(): Observable<{ data: Bolsa[] }> {
-    return this.http.get<{ data: Bolsa[] }>(`${this.base}/dashboard/pendientes`);
+  getPendientes(page: number = 1): Observable<Paginated<Bolsa>> {
+    let params = new HttpParams();
+    if (page) {
+      params = params.set('page', String(page));
+    }
+    return this.http.get<Paginated<Bolsa>>(`${this.base}/dashboard/pendientes`, { params });
   }
 
   buscar(q: string): Observable<{ data: Bolsa[] }> {
@@ -196,7 +266,7 @@ export class ApiService {
     } else if (error.status === 0) {
       message = 'No se pudo conectar con el servidor.';
     }
-    err.message = message;
+    err.message = mensajeSeguro(message);
     console.error(error);
     return throwError(() => err);
   }

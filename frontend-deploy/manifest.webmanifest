@@ -1,0 +1,26 @@
+{
+  "name": "Almacenaje Everly",
+  "short_name": "Everly",
+  "description": "Gestión del almacén de bolsas y casilleros de Everly",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#ffffff",
+  "theme_color": "#c026d3",
+  "lang": "es",
+  "icons": [
+    {
+      "src": "everly.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "everly.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

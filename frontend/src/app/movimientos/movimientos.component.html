@@ -20,7 +20,7 @@
         placeholder="Buscar por código de bolsa…"
       />
       @if (q) {
-        <button class="absolute right-2 top-1/2 -translate-y-1/2 rounded-md px-1.5 py-0.5 text-xs text-gray-400 hover:bg-gray-100 hover:text-gray-600" (click)="q = ''" title="Limpiar">
+        <button type="button" class="absolute right-2 top-1/2 -translate-y-1/2 rounded-md px-1.5 py-0.5 text-xs text-gray-400 hover:bg-gray-100 hover:text-gray-600" (click)="q = ''" title="Limpiar">
           <i class="bi bi-x-lg"></i>
         </button>
       }
@@ -116,8 +116,9 @@
         @if (q) {· bolsa "<strong>{{ q }}</strong>"}
       </span>
       <button
+        type="button"
         class="ml-auto rounded-md px-2 py-1 text-xs font-medium text-primary-600 hover:bg-primary-100"
-        (click)="q = ''; filtroTipo = ''"
+        (click)="limpiarFiltros()"
       >Limpiar filtros</button>
     </div>
   }

@@ -1,11 +1,13 @@
 import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../services/api.service';
-import { Bolsa, Casillero, DashboardStats } from '../models/models';
+import { Bolsa, CajaStats, Casillero, DashboardStats } from '../models/models';
+import { CommonModule } from '@angular/common';
+import { autoDismiss } from '../utils/auto-dismiss';
 
 @Component({
     selector: 'app-dashboard',
-    imports: [FormsModule],
+    imports: [CommonModule, FormsModule],
     changeDetection: ChangeDetectionStrategy.Eager,
     templateUrl: './dashboard.component.html'
 })
@@ -13,15 +15,26 @@ export class DashboardComponent implements OnInit {
   stats: DashboardStats | null = null;
   casilleros: Casillero[] = [];
   pendientes: Bolsa[] = [];
-  resultados: Bolsa[] = [];
   q = '';
+  resultados: Bolsa[] = [];
   buscando = false;
-  mensaje = '';
+  cargando = false;
+  cargandoPendientes = false;
   error = '';
+  mensaje = '';
+  foto: Bolsa | null = null;
+  cargandoFoto = false;
+  paginaPendientes = 1;
+  porPaginaPendientes = 10;
+  totalPendientes = 0;
+  desdePendientes = 0;
+  hastaPendientes = 0;
+  private mostrarMensaje = autoDismiss((m: string) => (this.mensaje = m));
 
   constructor(private api: ApiService) {}
 
   ngOnInit(): void {
+    this.paginaPendientes = 1;
     this.api.getDashboard().subscribe({
       next: (res) => (this.stats = res.data),
       error: (e) => (this.error = e.message),
@@ -30,10 +43,54 @@ export class DashboardComponent implements OnInit {
       next: (res) => (this.casilleros = res.data),
       error: (e) => (this.error = e.message),
     });
-    this.api.getPendientes().subscribe({
-      next: (res) => (this.pendientes = res.data),
-      error: (e) => (this.error = e.message),
+    this.cargarPendientes();
+  }
+
+  cargarPendientes(): void {
+    this.cargandoPendientes = true;
+    this.api.getPendientes(this.paginaPendientes).subscribe({
+      next: (res: any) => {
+        this.pendientes = res.data || [];
+        this.totalPendientes = res.total || 0;
+        this.paginaPendientes = res.current_page || this.paginaPendientes;
+        this.porPaginaPendientes = res.per_page || this.porPaginaPendientes;
+        if (this.totalPendientes === 0) {
+          this.desdePendientes = 0;
+          this.hastaPendientes = 0;
+        } else {
+          this.desdePendientes = (this.paginaPendientes - 1) * this.porPaginaPendientes + 1;
+          this.hastaPendientes = Math.min(this.paginaPendientes * this.porPaginaPendientes, this.totalPendientes);
+        }
+        this.cargandoPendientes = false;
+      },
+      error: (e) => {
+        this.error = e.message;
+        this.cargandoPendientes = false;
+      },
     });
+  }
+
+  cambiarPaginaPendientes(p: number): void {
+    if (p < 1 || p > this.totalPaginasPendientes()) return;
+    this.paginaPendientes = p;
+    this.cargarPendientes();
+  }
+
+  totalPaginasPendientes(): number {
+    if (this.porPaginaPendientes <= 0) return 1;
+    return Math.max(1, Math.ceil(this.totalPendientes / this.porPaginaPendientes));
+  }
+
+  paginasPendientes(): number[] {
+    const total = this.totalPaginasPendientes();
+    const actual = this.paginaPendientes;
+    const paginas: number[] = [];
+    const inicio = Math.max(1, actual - 2);
+    const fin = Math.min(total, actual + 2);
+    for (let i = inicio; i <= fin; i++) {
+      paginas.push(i);
+    }
+    return paginas;
   }
 
   conic(parts: { color: string; value: number }[]): string {
@@ -142,11 +199,26 @@ export class DashboardComponent implements OnInit {
         this.resultados = res.data;
         this.buscando = false;
         if (res.data.length === 0) {
-          this.mensaje = 'No se encontraron bolsas para la búsqueda.';
+          this.mostrarMensaje('No se encontraron bolsas para la búsqueda.');
         }
       },
       error: (e) => {
         this.buscando = false;
+        this.error = e.message;
+      },
+    });
+  }
+
+  verFoto(b: Bolsa): void {
+    this.error = '';
+    this.cargandoFoto = true;
+    this.api.getBolsa(b.id).subscribe({
+      next: (res) => {
+        this.cargandoFoto = false;
+        this.foto = res.data;
+      },
+      error: (e) => {
+        this.cargandoFoto = false;
         this.error = e.message;
       },
     });

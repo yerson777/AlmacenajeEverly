@@ -1,24 +1,63 @@
-import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../services/api.service';
 import { Clienta, Fardo, Pedido, Venta } from '../models/models';
+import { ModalErrorComponent } from '../shared/modal-error.component';
+import { aplicarErrorFormulario, mensajeError } from '../utils/api-errors';
 import { validarTodo, errVisible, requerido, noNegativo, maxLong, fechaValida, positivo, ReglasPorCampo } from '../utils/validators';
+import { autoDismiss } from '../utils/auto-dismiss';
+import { PeticionCancelable } from '../utils/peticion-cancelable';
+import { Subject, Subscription } from 'rxjs';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
 @Component({
     selector: 'app-pedidos',
-    imports: [FormsModule],
+    imports: [FormsModule, ModalErrorComponent],
     changeDetection: ChangeDetectionStrategy.Eager,
     templateUrl: './pedidos.component.html'
 })
-export class PedidosComponent implements OnInit {
+export class PedidosComponent implements OnInit, OnDestroy {
   pedidos: Pedido[] = [];
   clientas: Clienta[] = [];
   q = '';
+  private qSubject = new Subject<string>();
+  private qSub?: Subscription;
+  cargandoLista = false;
+  private readonly peticionLista = new PeticionCancelable();
   error = '';
+  errorModal = '';
   mensaje = '';
+  private mostrarMensaje = autoDismiss((m) => (this.mensaje = m));
   errores: Record<string, string> = {};
   intentado = false;
+  guardando = false;
   errVisible = errVisible;
+
+  tab = 'pendientes';
+  filtroMes: number | null = null;
+  filtroAnio: number | null = null;
+  filtroCobro = '';
+  pagina = 1;
+  porPagina = 10;
+  total = 0;
+  desde = 0;
+  hasta = 0;
+  contadores = { pendientes: 0, completados: 0, todos: 0 };
+  anios: number[] = [];
+  meses = [
+    { valor: 1, label: 'Ene' },
+    { valor: 2, label: 'Feb' },
+    { valor: 3, label: 'Mar' },
+    { valor: 4, label: 'Abr' },
+    { valor: 5, label: 'May' },
+    { valor: 6, label: 'Jun' },
+    { valor: 7, label: 'Jul' },
+    { valor: 8, label: 'Ago' },
+    { valor: 9, label: 'Sep' },
+    { valor: 10, label: 'Oct' },
+    { valor: 11, label: 'Nov' },
+    { valor: 12, label: 'Dic' },
+  ];
 
   mostrarModal = false;
   editando = false;
@@ -49,6 +88,30 @@ export class PedidosComponent implements OnInit {
   constructor(private api: ApiService) {}
 
   ngOnInit(): void {
+    this.pagina = 1;
+    const anioActual = new Date().getFullYear();
+    for (let i = 0; i < 5; i++) {
+      this.anios.push(anioActual - i);
+    }
+
+    const guardados = localStorage.getItem('pedidos_filtros');
+    if (guardados) {
+      try {
+        const g = JSON.parse(guardados);
+        if (g.tab) this.tab = g.tab;
+        if (g.filtroMes !== undefined) this.filtroMes = g.filtroMes;
+        if (g.filtroAnio !== undefined) this.filtroAnio = g.filtroAnio;
+        if (g.filtroCobro !== undefined) this.filtroCobro = g.filtroCobro;
+        if (g.q) this.q = g.q;
+      } catch {}
+    }
+
+    this.qSub = this.qSubject.pipe(debounceTime(300), distinctUntilChanged()).subscribe(() => {
+      this.pagina = 1;
+      this.guardarFiltros();
+      this.cargar();
+    });
+
     this.cargar();
     this.api.getClientas().subscribe({
       next: (res) => (this.clientas = res.data),
@@ -56,15 +119,99 @@ export class PedidosComponent implements OnInit {
     });
   }
 
+  ngOnDestroy(): void {
+    this.peticionLista.cancelar();
+    this.qSub?.unsubscribe();
+  }
+
+  guardarFiltros(): void {
+    try {
+      localStorage.setItem('pedidos_filtros', JSON.stringify({
+        tab: this.tab,
+        filtroMes: this.filtroMes,
+        filtroAnio: this.filtroAnio,
+        filtroCobro: this.filtroCobro,
+        pagina: this.pagina,
+        q: this.q,
+      }));
+    } catch {}
+  }
+
   cargar(): void {
-    this.api.getPedidos(this.q).subscribe({
-      next: (res) => (this.pedidos = res.data),
-      error: (e) => (this.error = e.message),
+    this.cargandoLista = true;
+    this.error = '';
+    this.peticionLista.ejecutar(this.api.getPedidos(this.q, undefined, false, this.tab, this.filtroMes, this.filtroAnio, this.filtroCobro || undefined, this.pagina), {
+      next: (res: any) => {
+        this.pedidos = res.data || [];
+        this.total = res.total || 0;
+        this.pagina = res.current_page || this.pagina;
+        this.porPagina = res.per_page || this.porPagina;
+        if (res.contadores) {
+          this.contadores = res.contadores;
+        }
+        if (this.total === 0) {
+          this.desde = 0;
+          this.hasta = 0;
+        } else {
+          this.desde = (this.pagina - 1) * this.porPagina + 1;
+          this.hasta = Math.min(this.pagina * this.porPagina, this.total);
+        }
+      },
+      error: (e) => (this.error = mensajeError(e)),
+      finalizar: () => (this.cargandoLista = false),
     });
   }
 
   buscar(): void {
+    this.pagina = 1;
+    this.guardarFiltros();
+    this.qSubject.next(this.q);
+  }
+
+  cambiarTab(tab: string): void {
+    this.tab = tab;
+    this.pagina = 1;
+    this.guardarFiltros();
     this.cargar();
+  }
+
+  cambiarFiltro(): void {
+    this.pagina = 1;
+    this.guardarFiltros();
+    this.cargar();
+  }
+
+  restablecerFiltros(): void {
+    this.filtroMes = null;
+    this.filtroAnio = null;
+    this.filtroCobro = '';
+    this.pagina = 1;
+    this.guardarFiltros();
+    this.cargar();
+  }
+
+  cambiarPagina(p: number): void {
+    if (p < 1 || p > this.totalPaginas()) return;
+    this.pagina = p;
+    this.guardarFiltros();
+    this.cargar();
+  }
+
+  totalPaginas(): number {
+    if (this.porPagina <= 0) return 1;
+    return Math.max(1, Math.ceil(this.total / this.porPagina));
+  }
+
+  paginas(): number[] {
+    const total = this.totalPaginas();
+    const actual = this.pagina;
+    const paginas: number[] = [];
+    const inicio = Math.max(1, actual - 2);
+    const fin = Math.min(total, actual + 2);
+    for (let i = inicio; i <= fin; i++) {
+      paginas.push(i);
+    }
+    return paginas;
   }
 
   private reglasPedido(): ReglasPorCampo {
@@ -89,8 +236,10 @@ export class PedidosComponent implements OnInit {
     this.cargarClientas('');
     this.mostrarModal = true;
     this.error = '';
+    this.errorModal = '';
     this.errores = {};
     this.intentado = false;
+    this.guardando = false;
   }
 
   abrirEditar(p: Pedido): void {
@@ -106,15 +255,34 @@ export class PedidosComponent implements OnInit {
     this.cargarClientas('');
     this.mostrarModal = true;
     this.error = '';
+    this.errorModal = '';
     this.errores = {};
     this.intentado = false;
+    this.guardando = false;
   }
 
   cargarClientas(q: string): void {
     this.api.getClientas(q).subscribe({
       next: (res) => (this.clientas = res.data),
-      error: (e) => (this.error = e.message),
+      error: (e) => (this.errorModal = mensajeError(e)),
     });
+  }
+
+  cerrarModal(): void {
+    this.mostrarModal = false;
+    this.errorModal = '';
+    this.errores = {};
+    this.intentado = false;
+    this.guardando = false;
+  }
+
+  cerrarCobro(): void {
+    this.mostrarCobro = false;
+    this.ventaExistente = null;
+    this.errorModal = '';
+    this.errores = {};
+    this.intentado = false;
+    this.guardando = false;
   }
 
   buscarClientas(): void {
@@ -126,7 +294,9 @@ export class PedidosComponent implements OnInit {
   }
 
   guardar(): void {
+    if (this.guardando) return;
     this.error = '';
+    this.errorModal = '';
     this.intentado = true;
     const res = validarTodo(
       {
@@ -140,7 +310,7 @@ export class PedidosComponent implements OnInit {
     this.errores = res.errores;
     if (!res.ok) return;
     if (!this.formClientaId) {
-      this.error = 'Debe seleccionar una clienta.';
+      this.errorModal = 'Debe seleccionar una clienta.';
       return;
     }
     const payload = {
@@ -155,23 +325,14 @@ export class PedidosComponent implements OnInit {
       ? this.api.updatePedido(this.pedidoActual.id, payload)
       : this.api.createPedido(payload);
 
+    this.guardando = true;
     request.subscribe({
       next: (res) => {
-        this.mensaje = res.message;
-        this.mostrarModal = false;
+        this.mostrarMensaje(res.message);
+        this.cerrarModal();
         this.cargar();
       },
-      error: (e) => {
-        const errs = (e as any)?.errors;
-        if (errs && Object.keys(errs).length) {
-          this.errores = Object.fromEntries(
-            Object.entries(errs).map(([c, msgs]) => [c, Array.isArray(msgs) ? msgs[0] : String(msgs)])
-          ) as Record<string, string>;
-          this.intentado = true;
-        } else {
-          this.error = e.message;
-        }
-      },
+      error: (e) => aplicarErrorFormulario(e, this),
     });
   }
 
@@ -179,7 +340,7 @@ export class PedidosComponent implements OnInit {
     if (!confirm(`¿Eliminar el pedido ${p.codigo}? Se eliminarán sus bolsas asociadas.`)) return;
     this.api.deletePedido(p.id).subscribe({
       next: (res) => {
-        this.mensaje = res.message;
+        this.mostrarMensaje(res.message);
         this.cargar();
       },
       error: (e) => (this.error = e.message),
@@ -203,8 +364,10 @@ export class PedidosComponent implements OnInit {
 
   abrirCobro(p: Pedido): void {
     this.error = '';
+    this.errorModal = '';
     this.errores = {};
     this.intentado = false;
+    this.guardando = false;
     const va = p.venta_activa ?? null;
     if (va && Number(va.monto) === Number(p.total)) {
       this.error = `Este pedido ya fue cobrado por ${this.money(va.monto)}. Para volver a cobrarlo, primero edite el monto del pedido; al confirmar se actualizará la venta sin duplicarla en caja.`;
@@ -224,14 +387,16 @@ export class PedidosComponent implements OnInit {
         next: (res) => {
           this.fardos = res.data;
         },
-        error: (e) => (this.error = e.message),
+        error: (e) => (this.errorModal = mensajeError(e)),
       });
     }
     this.mostrarCobro = true;
   }
 
   guardarCobro(): void {
+    if (this.guardando) return;
     this.error = '';
+    this.errorModal = '';
     if (!this.cobroPedido) return;
     this.intentado = true;
     const res = validarTodo(
@@ -247,7 +412,7 @@ export class PedidosComponent implements OnInit {
     this.errores = res.errores;
     if (!res.ok) return;
     if (!this.formCobro.fardo_id || this.formCobro.monto === null) {
-      this.error = 'Seleccione un fardo e ingrese un monto mayor a 0.';
+      this.errorModal = 'Seleccione un fardo e ingrese un monto mayor a 0.';
       return;
     }
     const payload: Partial<Venta> = {
@@ -264,26 +429,18 @@ export class PedidosComponent implements OnInit {
       ? this.api.updateVenta(this.ventaExistente.id, payload)
       : this.api.createVenta(payload);
 
+    this.guardando = true;
     request.subscribe({
       next: (res) => {
-        this.mensaje = this.ventaExistente
+        this.mostrarMensaje(this.ventaExistente
           ? `Venta actualizada a ${this.money(this.formCobro.monto)}. Se reflejará en caja sin duplicar.`
-          : res.message;
+          : res.message);
         this.mostrarCobro = false;
         this.ventaExistente = null;
+        this.errorModal = '';
         this.cargar();
       },
-      error: (e) => {
-        const errs = (e as any)?.errors;
-        if (errs && Object.keys(errs).length) {
-          this.errores = Object.fromEntries(
-            Object.entries(errs).map(([c, msgs]) => [c, Array.isArray(msgs) ? msgs[0] : String(msgs)])
-          ) as Record<string, string>;
-          this.intentado = true;
-        } else {
-          this.error = e.message;
-        }
-      },
+      error: (e) => aplicarErrorFormulario(e, this),
     });
   }
 

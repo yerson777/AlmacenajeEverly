@@ -13,7 +13,10 @@ import { AuthService } from '../services/auth.service';
 })
 export class MainLayoutComponent implements OnInit, OnDestroy {
   menuAbierto = false;
-  colapsada = localStorage.getItem('everly_menu') === '1';
+  hoverDisponible = typeof window !== 'undefined' && !!window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+  colapsada = this.hoverDisponible ? true : localStorage.getItem('everly_menu') === '1';
+  menuExpandidoHover = false;
+  private temporizadorColapso?: ReturnType<typeof setTimeout>;
   navItems = [
     { label: 'Inicio', route: '/dashboard', icon: 'bi-speedometer2' },
     { label: 'Casilleros', route: '/casilleros', icon: 'bi-boxes' },
@@ -35,6 +38,10 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
     return this.navItems.filter((i) => i.route !== '/usuarios' || this.auth.usuario?.role === 'super_admin');
   }
 
+  get menuColapsado(): boolean {
+    return this.colapsada && !this.menuExpandidoHover;
+  }
+
   ngOnInit(): void {
     this.router.events
       .pipe(
@@ -47,12 +54,34 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.cancelarColapso();
     this.destroy$.next();
     this.destroy$.complete();
   }
 
   alternarMenu(): void {
     this.menuAbierto = !this.menuAbierto;
+  }
+
+  alEntrarMenu(): void {
+    if (!this.hoverDisponible) return;
+    this.cancelarColapso();
+    this.menuExpandidoHover = true;
+  }
+
+  alSalirMenu(): void {
+    if (!this.hoverDisponible) return;
+    this.cancelarColapso();
+    this.temporizadorColapso = setTimeout(() => {
+      this.menuExpandidoHover = false;
+    }, 150);
+  }
+
+  private cancelarColapso(): void {
+    if (this.temporizadorColapso) {
+      clearTimeout(this.temporizadorColapso);
+      this.temporizadorColapso = undefined;
+    }
   }
 
   alternarColapsada(): void {
