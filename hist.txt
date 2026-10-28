@@ -1,0 +1,65 @@
+﻿187:           @for (t of ['dia', 'semana', 'mes']; track t) {
+188:             <button
+189:               type="button"
+190:               class="rounded-md px-3 py-1.5 text-xs font-semibold transition-colors"
+191:               [class.bg-white]="chartTab === t"
+192:               [class.text-fuchsia-700]="chartTab === t"
+193:               [class.shadow-sm]="chartTab === t"
+194:               [class.text-gray-500]="chartTab !== t"
+195:               [attr.aria-pressed]="chartTab === t"
+196:               (click)="setChartTab(t)"
+197:             >{{ t === 'dia' ? 'DÃ­a' : t === 'semana' ? 'Semana' : 'Mes' }}</button>
+198:           }
+199:         </div>
+200:       </div>
+201:       @if (!tieneSerie) {
+202:         <div class="flex h-44 items-center justify-center rounded-xl border border-dashed border-gray-300 text-sm text-gray-400">
+203:           Sin ventas en este periodo.
+204:         </div>
+205:       } @else {
+206:         <div class="overflow-x-auto">
+207:           <div class="flex min-h-[190px] items-end gap-1.5 pb-1 pt-2" [class.min-w-[680px]]="chartTab === 'dia'" [class.min-w-[360px]]="chartTab !== 'dia'">
+208:             @for (item of serie; track item.fecha) {
+209:               <div class="flex flex-1 flex-col items-center gap-1" [title]="item.etiqueta + ': ' + money(item.ventas) + ' | ' + item.cantidad + ' ventas'">
+210:                 <div
+211:                   class="w-full rounded-t-md bg-gradient-to-t transition-all"
+212:                   [class]="isMax(item) ? 'from-fuchsia-600 to-purple-500' : 'from-primary-300 to-primary-500'"
+213:                   [style.height.px]="barHeight(item.ventas)"
+214:                 ></div>
+215:                 <span class="text-[10px] text-gray-400">{{ item.etiqueta }}</span>
+216:               </div>
+217:             }
+218:           </div>
+219:         </div>
+220:       }
+221:     </div>
+222: 
+223:     <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+224:       <h5 class="mb-4 flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-gray-700">
+225:         <i class="bi bi-wallet2 text-teal-600"></i> Formas de pago
+226:       </h5>
+227:       <div class="space-y-3">
+228:         @for (fp of formas; track fp) {
+229:           <div>
+230:             <div class="mb-1 flex items-center justify-between text-sm">
+231:               <span class="flex items-center gap-2 text-gray-600">
+232:                 <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-gray-100 text-gray-600"><i class="bi {{ formaIcons[fp] }}"></i></span>
+233:                 {{ fp }}
+234:               </span>
+235:               <span class="font-semibold text-gray-900">{{ money(formaTotal(fp)) }}</span>
+236:             </div>
+237:             <div class="h-2 w-full overflow-hidden rounded-full bg-gray-200">
+238:               <div
+239:                 class="h-full rounded-full bg-teal-500 transition-all"
+240:                 [style.width.%]="maxFormaPct() ? (formaPct(fp) / maxFormaPct() * 100) : 0"
+241:               ></div>
+242:             </div>
+243:             <div class="mt-0.5 text-xs text-gray-400">{{ formaCantidad(fp) }} pagos Â· {{ formaPct(fp) }}%</div>
+244:           </div>
+245:         }
+246:       </div>
+247:     </div>
+248:   </div>
+249: 
+250:   <!-- Fardos -->
+251:   <div class="mb-6">

@@ -181,12 +181,20 @@ export class ApiService {
     return this.http.get<{ data: DashboardStats }>(`${this.base}/dashboard`);
   }
 
-  getCaja(filtro = 'hoy', desde?: string, hasta?: string, offset?: number): Observable<{ data: CajaStats }> {
+  getCaja(filtro = 'hoy', desde?: string, hasta?: string, offset?: number, liqPeriodo?: string, liqOffset?: number): Observable<{ data: CajaStats }> {
     let params = new HttpParams().set('filtro', filtro);
     if (desde) params = params.set('desde', desde);
     if (hasta) params = params.set('hasta', hasta);
     if (offset !== undefined && offset !== null) params = params.set('offset', String(offset));
+    if (liqPeriodo) params = params.set('liq_periodo', liqPeriodo);
+    if (liqOffset !== undefined && liqOffset !== null) params = params.set('liq_offset', String(liqOffset));
     return this.http.get<{ data: CajaStats }>(`${this.base}/caja`, { params });
+  }
+
+  getLiquidacionHistorial(grupo: 'semanal' | 'mensual' = 'semanal', limite?: number): Observable<any> {
+    let params = new HttpParams().set('grupo', grupo);
+    if (limite) params = params.set('limite', String(limite));
+    return this.http.get<any>(`${this.base}/caja/liquidacion-historial`, { params });
   }
 
   getFardos(q = ''): Observable<{ data: Fardo[] }> {

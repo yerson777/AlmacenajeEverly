@@ -41,6 +41,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('ventas/{venta}/anular', [VentaController::class, 'anular']);
 
     Route::get('caja', [CajaController::class, 'index']);
+    Route::get('caja/liquidacion-historial', [CajaController::class, 'liquidacionHistorial']);
 
     Route::middleware('role:super_admin')->group(function () {
         Route::apiResource('usuarios', UsuarioController::class)->except(['create', 'edit', 'show']);

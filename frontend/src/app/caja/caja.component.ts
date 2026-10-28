@@ -49,8 +49,14 @@ export class CajaComponent implements OnInit, OnDestroy {
   vistaFardos: VistaFardos = 'lista';
   paginaFardos = 1;
   readonly porPaginaFardos = 6;
-  periodoLiquidacion: PeriodoLiquidacion = 'total';
-  readonly periodosLiquidacion: PeriodoLiquidacion[] = ['hoy', 'semana', 'mes', 'total'];
+  periodoLiquidacion: PeriodoLiquidacion = 'hoy';
+  offsetLiquidacion = 0;
+  readonly periodosLiquidacion: PeriodoLiquidacion[] = ['hoy', 'semana', 'mes'];
+  mostrarHistorialLiquidacion = false;
+  grupoHistorialLiquidacion: 'semanal' | 'mensual' = 'semanal';
+  historialLiquidacion: any[] = [];
+  graficoLiquidacion: any[] = [];
+  cargandoHistorialLiquidacion = false;
   readonly tabsFardos: { id: TipoFardo; label: string }[] = [
     { id: 'activos', label: 'Activos' },
     { id: 'recuperados', label: 'Recuperados' },
@@ -81,6 +87,7 @@ export class CajaComponent implements OnInit, OnDestroy {
   detalleFardo: Fardo | null = null;
 
   constructor(private api: ApiService) {}
+  Math = Math;
 
   ngOnInit(): void {
     this.paginaFardos = 1;
@@ -95,7 +102,7 @@ export class CajaComponent implements OnInit, OnDestroy {
     }
 
     this.chartTab = leerPreferencia('caja_chart_tab', ['dia', 'semana', 'mes'], 'dia');
-    this.periodoLiquidacion = leerPreferencia('caja_periodo_liquidacion', this.periodosLiquidacion, 'total');
+    this.periodoLiquidacion = leerPreferencia('caja_periodo_liquidacion', this.periodosLiquidacion, 'hoy') as PeriodoLiquidacion;
 
     const vista = localStorage.getItem('caja_vista_fardos');
     if (vista === 'lista' || vista === 'tarjetas') this.vistaFardos = vista;
@@ -151,7 +158,7 @@ export class CajaComponent implements OnInit, OnDestroy {
     this.errorFiltro = '';
 
     const { desde, hasta, offset } = this.parametrosFiltro();
-    this.peticion.ejecutar(this.api.getCaja(this.filtro, desde, hasta, offset), {
+    this.peticion.ejecutar(this.api.getCaja(this.filtro, desde, hasta, offset, this.periodoLiquidacion, this.offsetLiquidacion), {
       next: (res) => {
         this.datos = res.data;
         this.periodo = res.data;
@@ -180,7 +187,7 @@ export class CajaComponent implements OnInit, OnDestroy {
     this.cargandoFiltro = true;
     this.errorFiltro = '';
     const { desde, hasta, offset } = this.parametrosFiltro();
-    this.peticion.ejecutar(this.api.getCaja(this.filtro, desde, hasta, offset), {
+    this.peticion.ejecutar(this.api.getCaja(this.filtro, desde, hasta, offset, this.periodoLiquidacion, this.offsetLiquidacion), {
       next: (res) => {
         this.periodo = res.data;
       },
@@ -380,11 +387,91 @@ export class CajaComponent implements OnInit, OnDestroy {
   setPeriodoLiquidacion(periodo: PeriodoLiquidacion): void {
     if (!this.periodosLiquidacion.includes(periodo)) return;
     this.periodoLiquidacion = periodo;
+    this.offsetLiquidacion = 0;
     recordarPreferencia('caja_periodo_liquidacion', periodo);
+    this.cargarPeriodo();
+  }
+
+  liquidacionAnterior(): void {
+    this.offsetLiquidacion++;
+    this.cargarPeriodo();
+  }
+
+  liquidacionSiguiente(): void {
+    if (this.offsetLiquidacion === 0) return;
+    this.offsetLiquidacion--;
+    this.cargarPeriodo();
+  }
+
+  liquidacionPeriodoLabel(): string {
+    const p: any = this.periodo?.liquidacion;
+    if (p?.actual?.label) {
+      return p.actual.label;
+    }
+    const base = new Date();
+    if (this.periodoLiquidacion === 'hoy') {
+      const d = new Date(base.getTime() - this.offsetLiquidacion * 24 * 60 * 60 * 1000);
+      return d.toLocaleDateString('es-BO', { day: '2-digit', month: 'short', year: 'numeric' });
+    }
+    if (this.periodoLiquidacion === 'semana') {
+      const d = new Date(base.getTime() - this.offsetLiquidacion * 7 * 24 * 60 * 60 * 1000);
+      const inicio = new Date(d);
+      const day = inicio.getDay();
+      const diff = (day === 0 ? -6 : 1) - day;
+      inicio.setDate(inicio.getDate() + diff);
+      const fin = new Date(inicio);
+      fin.setDate(fin.getDate() + 6);
+      return `${inicio.toLocaleDateString('es-BO', { day: '2-digit', month: 'short' })} – ${fin.toLocaleDateString('es-BO', { day: '2-digit', month: 'short', year: 'numeric' })}`;
+    }
+    if (this.periodoLiquidacion === 'mes') {
+      const d = new Date(base.getFullYear(), base.getMonth() - this.offsetLiquidacion, 1);
+      return d.toLocaleDateString('es-BO', { month: 'long', year: 'numeric' });
+    }
+    return 'Total histórico';
+  }
+
+  abrirHistorialLiquidacion(): void {
+    this.mostrarHistorialLiquidacion = true;
+    this.cargarHistorialLiquidacion();
+  }
+
+  cerrarHistorialLiquidacion(): void {
+    this.mostrarHistorialLiquidacion = false;
+  }
+
+  setGrupoHistorial(g: 'semanal' | 'mensual'): void {
+    this.grupoHistorialLiquidacion = g;
+    this.cargarHistorialLiquidacion();
+  }
+
+  cargarHistorialLiquidacion(): void {
+    this.cargandoHistorialLiquidacion = true;
+    this.api.getLiquidacionHistorial(this.grupoHistorialLiquidacion, 60).subscribe({
+      next: (res: any) => {
+        this.historialLiquidacion = res?.data?.items || [];
+        this.graficoLiquidacion = res?.data?.grafico_mensual || res?.data?.grafico || [];
+      },
+      error: () => {
+        this.historialLiquidacion = [];
+        this.graficoLiquidacion = [];
+      },
+      complete: () => {
+        this.cargandoHistorialLiquidacion = false;
+      }
+    });
   }
 
   get resumenLiquidacion(): ResumenLiquidacion {
-    return this.periodo?.liquidacion?.[this.periodoLiquidacion] ?? { total: 0, cantidad: 0 };
+    const ventas = this.periodo?.ventas || [];
+    const liqVentas = ventas.filter((v: any) => v.fardo_es_liquidacion);
+    const total = liqVentas.reduce((sum: number, v: any) => sum + Number(v.monto || 0), 0);
+    const cantidad = liqVentas.length;
+    return { total: Math.round(total * 100) / 100, cantidad };
+  }
+
+  get liquidacionTotalHistorico(): ResumenLiquidacion {
+    const liq: any = this.periodo?.liquidacion;
+    return liq?.['total'] ?? liq?.total ?? { total: 0, cantidad: 0 };
   }
 
   get promedioLiquidacion(): number {

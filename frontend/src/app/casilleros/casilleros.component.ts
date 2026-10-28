@@ -16,6 +16,8 @@ import { autoDismiss } from '../utils/auto-dismiss';
 export class CasillerosComponent implements OnInit {
   casilleros: Casillero[] = [];
   posiciones: CasilleroPosicion[] = [];
+  pagina = 1;
+  porPagina = 9;
   casilleroSeleccionado: Casillero | null = null;
   error = '';
   errorModal = '';
@@ -47,9 +49,39 @@ export class CasillerosComponent implements OnInit {
     this.cargar();
   }
 
+  get casillerosPaginados(): Casillero[] {
+    const inicio = (this.pagina - 1) * this.porPagina;
+    return this.casilleros.slice(inicio, inicio + this.porPagina);
+  }
+
+  get totalPaginas(): number {
+    return Math.max(1, Math.ceil(this.casilleros.length / this.porPagina));
+  }
+
+  get mostrarPaginacion(): boolean {
+    return this.casilleros.length > this.porPagina;
+  }
+
+  get paginaActual(): number {
+    if (this.pagina > this.totalPaginas) this.pagina = this.totalPaginas;
+    if (this.pagina < 1) this.pagina = 1;
+    return this.pagina;
+  }
+
+  cambiarPagina(delta: number): void {
+    const nueva = this.pagina + delta;
+    if (nueva < 1 || nueva > this.totalPaginas) return;
+    this.pagina = nueva;
+  }
+
   cargar(): void {
+    this.pagina = 1;
     this.api.getCasilleros().subscribe({
-      next: (res) => (this.casilleros = res.data),
+      next: (res) => {
+        this.casilleros = res.data;
+        if (this.pagina > this.totalPaginas) this.pagina = this.totalPaginas || 1;
+        if (this.pagina < 1) this.pagina = 1;
+      },
       error: (e) => (this.error = e.message),
     });
   }
@@ -127,7 +159,24 @@ export class CasillerosComponent implements OnInit {
       next: (res) => {
         this.mostrarMensaje(res.message);
         this.cerrarModal();
-        this.cargar();
+        const estabaEnUltima = this.pagina >= this.totalPaginas;
+        this.api.getCasilleros().subscribe({
+          next: (r) => {
+            this.casilleros = r.data;
+            if (this.editando) {
+              if (this.pagina > this.totalPaginas) this.pagina = this.totalPaginas || 1;
+              if (this.pagina < 1) this.pagina = 1;
+            } else {
+              if (estabaEnUltima || this.casilleros.length <= this.porPagina) {
+                this.pagina = this.totalPaginas || 1;
+              } else {
+                this.pagina = this.totalPaginas || 1;
+              }
+              if (this.pagina < 1) this.pagina = 1;
+            }
+          },
+          error: (e) => (this.error = e.message),
+        });
       },
       error: (e) => aplicarErrorFormulario(e, this),
     });
@@ -142,7 +191,14 @@ export class CasillerosComponent implements OnInit {
     this.api.setCasilleroEstado(c.id, !c.activo).subscribe({
       next: (res) => {
         this.mostrarMensaje(res.message);
-        this.cargar();
+        this.api.getCasilleros().subscribe({
+          next: (r) => {
+            this.casilleros = r.data;
+            if (this.pagina > this.totalPaginas) this.pagina = this.totalPaginas || 1;
+            if (this.pagina < 1) this.pagina = 1;
+          },
+          error: (e) => (this.error = e.message),
+        });
       },
       error: (e) => (this.error = e.message),
     });
@@ -150,10 +206,30 @@ export class CasillerosComponent implements OnInit {
 
   eliminar(c: Casillero): void {
     if (!confirm(`¿Eliminar el casillero ${c.codigo}?`)) return;
+    const paginaAntes = this.pagina;
     this.api.deleteCasillero(c.id).subscribe({
       next: (res) => {
         this.mostrarMensaje(res.message);
-        this.cargar();
+        this.api.getCasilleros().subscribe({
+          next: (r) => {
+            this.casilleros = r.data;
+            const total = this.totalPaginas;
+            if (this.casilleros.length === 0) {
+              this.pagina = 1;
+              return;
+            }
+            if (paginaAntes > total) {
+              this.pagina = total;
+            } else if (paginaAntes < 1) {
+              this.pagina = 1;
+            } else {
+              this.pagina = paginaAntes;
+            }
+            if (this.pagina > this.totalPaginas) this.pagina = this.totalPaginas;
+            if (this.pagina < 1) this.pagina = 1;
+          },
+          error: (e) => (this.error = e.message),
+        });
       },
       error: (e) => (this.error = e.message),
     });
