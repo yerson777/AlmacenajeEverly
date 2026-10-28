@@ -101,27 +101,36 @@ class CajaController extends Controller
             'fardos_recuperados' => $fardosRecuperados,
         ];
 
-        $historial = Venta::with(['fardo:id,codigo,categoria', 'clienta:id,nombre', 'pedido:id,codigo'])
+        $perPageVentas = (int) $request->input('ventas_per_page', 10);
+        if ($perPageVentas < 1 || $perPageVentas > 100) {
+            $perPageVentas = 10;
+        }
+
+        $totalVentas = (int) $resumen['ventas_count'];
+        $maxPaginasVentas = max(1, (int) ceil($totalVentas / $perPageVentas));
+        $paginaVentas = min(max(1, (int) $request->input('ventas_page', 1)), $maxPaginasVentas);
+
+        $ventasPaginadas = Venta::with(['fardo:id,codigo,categoria', 'clienta:id,nombre', 'pedido:id,codigo'])
             ->where('estado', '!=', Venta::ESTADO_ANULADA)
             ->whereBetween('fecha', [$desdeStr, $hastaStr])
             ->orderByDesc('fecha')
             ->orderByDesc('id')
-            ->limit(200)
-            ->get()
-            ->map(function (Venta $v) {
-                return [
-                    'id' => $v->id,
-                    'fecha' => $v->fecha?->format('Y-m-d'),
-                    'codigo_pedido' => $v->pedido?->codigo,
-                    'clienta_nombre' => $v->clienta?->nombre,
-                    'fardo_codigo' => $v->fardo?->codigo,
-                    'fardo_categoria' => $v->fardo?->categoria,
-                    'fardo_es_liquidacion' => (bool) $v->fardo?->esLiquidacion(),
-                    'monto' => round((float) $v->monto, 2),
-                    'forma_pago' => $v->forma_pago,
-                    'estado' => $v->estado,
-                ];
-            });
+            ->paginate($perPageVentas, ['*'], 'ventas_page', $paginaVentas);
+
+        $historial = $ventasPaginadas->getCollection()->map(function (Venta $v) {
+            return [
+                'id' => $v->id,
+                'fecha' => $v->fecha?->format('Y-m-d'),
+                'codigo_pedido' => $v->pedido?->codigo,
+                'clienta_nombre' => $v->clienta?->nombre,
+                'fardo_codigo' => $v->fardo?->codigo,
+                'fardo_categoria' => $v->fardo?->categoria,
+                'fardo_es_liquidacion' => (bool) $v->fardo?->esLiquidacion(),
+                'monto' => round((float) $v->monto, 2),
+                'forma_pago' => $v->forma_pago,
+                'estado' => $v->estado,
+            ];
+        })->values();
 
         $liquidacionRes = $this->resumenLiquidacion($liquidacion, $hoy, $liqPeriodo, $liqOffset, $tz);
 
@@ -138,6 +147,12 @@ class CajaController extends Controller
                 'fardos' => $fardos,
                 'liquidacion' => $liquidacionRes,
                 'ventas' => $historial,
+                'ventas_paginacion' => [
+                    'total' => $ventasPaginadas->total(),
+                    'current_page' => $ventasPaginadas->currentPage(),
+                    'last_page' => $ventasPaginadas->lastPage(),
+                    'per_page' => $ventasPaginadas->perPage(),
+                ],
                 'series' => [
                     'diario' => $this->porDias($hoy, 30),
                     'semanal' => $this->porSemanas($hoy, 12),

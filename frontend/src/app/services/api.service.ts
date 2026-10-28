@@ -172,22 +172,44 @@ export class ApiService {
     return this.http.delete(`${this.base}/bolsas/${id}`).pipe(catchError(this.handleError));
   }
 
-  getMovimientos(bolsaId?: number): Observable<{ data: Movimiento[] }> {
-    const params = bolsaId ? new HttpParams().set('bolsa_id', String(bolsaId)) : undefined;
-    return this.http.get<{ data: Movimiento[] }>(`${this.base}/movimientos`, { params });
+  getMovimientos(
+    q = '',
+    tipo = '',
+    page: number = 1,
+    bolsaId?: number | null,
+    perPage?: number | null
+  ): Observable<Paginated<Movimiento> & { contadores?: { almacenadas: number; entregadas: number; movidas: number; todos: number } }> {
+    let params = new HttpParams();
+    if (q) {
+      params = params.set('q', q);
+    }
+    if (tipo) {
+      params = params.set('tipo', tipo);
+    }
+    if (bolsaId) {
+      params = params.set('bolsa_id', String(bolsaId));
+    }
+    if (perPage) {
+      params = params.set('per_page', String(perPage));
+    }
+    if (page) {
+      params = params.set('page', String(page));
+    }
+    return this.http.get<Paginated<Movimiento> & { contadores?: { almacenadas: number; entregadas: number; movidas: number; todos: number } }>(`${this.base}/movimientos`, { params });
   }
 
   getDashboard(): Observable<{ data: DashboardStats }> {
     return this.http.get<{ data: DashboardStats }>(`${this.base}/dashboard`);
   }
 
-  getCaja(filtro = 'hoy', desde?: string, hasta?: string, offset?: number, liqPeriodo?: string, liqOffset?: number): Observable<{ data: CajaStats }> {
+  getCaja(filtro = 'hoy', desde?: string, hasta?: string, offset?: number, liqPeriodo?: string, liqOffset?: number, ventasPage?: number): Observable<{ data: CajaStats }> {
     let params = new HttpParams().set('filtro', filtro);
     if (desde) params = params.set('desde', desde);
     if (hasta) params = params.set('hasta', hasta);
     if (offset !== undefined && offset !== null) params = params.set('offset', String(offset));
     if (liqPeriodo) params = params.set('liq_periodo', liqPeriodo);
     if (liqOffset !== undefined && liqOffset !== null) params = params.set('liq_offset', String(liqOffset));
+    if (ventasPage !== undefined && ventasPage !== null) params = params.set('ventas_page', String(ventasPage));
     return this.http.get<{ data: CajaStats }>(`${this.base}/caja`, { params });
   }
 

@@ -643,7 +643,7 @@
         <span class="h-4 w-4 animate-spin rounded-full border-2 border-gray-200 border-t-primary-600" aria-label="Actualizando"></span>
       }
     </div>
-    @if (periodo.ventas.length === 0) {
+    @if (periodo.ventas.length === 0 && totalVentas === 0) {
       <p class="px-5 py-6 text-sm text-gray-400">No hay ventas registradas en este periodo.</p>
     } @else {
       <div class="hidden overflow-x-auto md:block">
@@ -706,6 +706,20 @@
           </tbody>
         </table>
       </div>
+
+      @if (totalVentas > 0) {
+        <div class="hidden items-center justify-between gap-2 border-t border-gray-200 px-5 py-3 text-sm text-gray-600 md:flex">
+          <div>Mostrando {{ desdeVentas }}-{{ hastaVentas }} de {{ totalVentas }}</div>
+          <div class="flex items-center gap-1">
+            <button class="rounded-lg px-2 py-1 hover:bg-gray-100 disabled:opacity-50" (click)="cambiarPaginaVentas(paginaVentas-1)" [disabled]="paginaVentas <= 1">Anterior</button>
+            @for (p of paginasVentas(); track p) {
+              <button class="rounded-lg px-2 py-1" [class.bg-primary-600]="p === paginaVentas" [class.text-white]="p === paginaVentas" [class.hover:bg-gray-100]="p !== paginaVentas" (click)="cambiarPaginaVentas(p)">{{ p }}</button>
+            }
+            <button class="rounded-lg px-2 py-1 hover:bg-gray-100 disabled:opacity-50" (click)="cambiarPaginaVentas(paginaVentas+1)" [disabled]="paginaVentas >= totalPaginasVentas()">Siguiente</button>
+          </div>
+        </div>
+      }
+
       <div class="space-y-3 p-4 md:hidden">
         @for (v of periodo.ventas; track v.id) {
           <div class="rounded-xl border border-gray-200 bg-white p-3">
@@ -749,6 +763,16 @@
           </div>
         }
       </div>
+
+      @if (totalVentas > 0) {
+        <div class="flex items-center justify-between gap-2 border-t border-gray-200 px-4 py-3 text-sm text-gray-600 md:hidden">
+          <div>Mostrando {{ desdeVentas }}-{{ hastaVentas }} de {{ totalVentas }}</div>
+          <div class="flex items-center gap-1">
+            <button class="rounded-lg px-2 py-1 hover:bg-gray-100 disabled:opacity-50" (click)="cambiarPaginaVentas(paginaVentas-1)" [disabled]="paginaVentas <= 1">Anterior</button>
+            <button class="rounded-lg px-2 py-1 hover:bg-gray-100 disabled:opacity-50" (click)="cambiarPaginaVentas(paginaVentas+1)" [disabled]="paginaVentas >= totalPaginasVentas()">Siguiente</button>
+          </div>
+        </div>
+      }
     }
   </div>
 }

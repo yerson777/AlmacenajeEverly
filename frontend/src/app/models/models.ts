@@ -181,6 +181,7 @@ export interface CajaStats {
     total: ResumenLiquidacion;
   };
   ventas: Venta[];
+  ventas_paginacion?: { total: number; current_page: number; last_page: number; per_page: number };
   series: {
     diario: SerieCaja[];
     semanal: SerieCaja[];

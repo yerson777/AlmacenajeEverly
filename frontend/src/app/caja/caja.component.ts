@@ -49,6 +49,11 @@ export class CajaComponent implements OnInit, OnDestroy {
   vistaFardos: VistaFardos = 'lista';
   paginaFardos = 1;
   readonly porPaginaFardos = 6;
+  paginaVentas = 1;
+  porPaginaVentas = 10;
+  totalVentas = 0;
+  desdeVentas = 0;
+  hastaVentas = 0;
   periodoLiquidacion: PeriodoLiquidacion = 'hoy';
   offsetLiquidacion = 0;
   readonly periodosLiquidacion: PeriodoLiquidacion[] = ['hoy', 'semana', 'mes'];
@@ -158,11 +163,12 @@ export class CajaComponent implements OnInit, OnDestroy {
     this.errorFiltro = '';
 
     const { desde, hasta, offset } = this.parametrosFiltro();
-    this.peticion.ejecutar(this.api.getCaja(this.filtro, desde, hasta, offset, this.periodoLiquidacion, this.offsetLiquidacion), {
+    this.peticion.ejecutar(this.api.getCaja(this.filtro, desde, hasta, offset, this.periodoLiquidacion, this.offsetLiquidacion, this.paginaVentas), {
       next: (res) => {
         this.datos = res.data;
         this.periodo = res.data;
         this.paginaFardos = 1;
+        this.aplicarPaginacionVentas(res.data);
       },
       error: () => {
         if (inicial) {
@@ -187,9 +193,10 @@ export class CajaComponent implements OnInit, OnDestroy {
     this.cargandoFiltro = true;
     this.errorFiltro = '';
     const { desde, hasta, offset } = this.parametrosFiltro();
-    this.peticion.ejecutar(this.api.getCaja(this.filtro, desde, hasta, offset, this.periodoLiquidacion, this.offsetLiquidacion), {
+    this.peticion.ejecutar(this.api.getCaja(this.filtro, desde, hasta, offset, this.periodoLiquidacion, this.offsetLiquidacion, this.paginaVentas), {
       next: (res) => {
         this.periodo = res.data;
+        this.aplicarPaginacionVentas(res.data);
       },
       error: () => {
         this.errorFiltro = 'No se pudieron actualizar los datos de Caja. Intenta de nuevo.';
@@ -200,11 +207,59 @@ export class CajaComponent implements OnInit, OnDestroy {
     });
   }
 
+  private aplicarPaginacionVentas(datos: CajaStats): void {
+    const pag = datos.ventas_paginacion;
+    if (!pag) {
+      this.paginaVentas = 1;
+      this.totalVentas = datos.ventas.length;
+      this.desdeVentas = this.totalVentas ? 1 : 0;
+      this.hastaVentas = this.totalVentas;
+      return;
+    }
+
+    this.paginaVentas = pag.current_page || 1;
+    this.totalVentas = pag.total || 0;
+    this.porPaginaVentas = pag.per_page || this.porPaginaVentas;
+
+    if (this.totalVentas === 0) {
+      this.desdeVentas = 0;
+      this.hastaVentas = 0;
+    } else {
+      this.desdeVentas = (this.paginaVentas - 1) * this.porPaginaVentas + 1;
+      this.hastaVentas = Math.min(this.paginaVentas * this.porPaginaVentas, this.totalVentas);
+    }
+  }
+
+  totalPaginasVentas(): number {
+    if (this.porPaginaVentas <= 0) return 1;
+    return Math.max(1, Math.ceil(this.totalVentas / this.porPaginaVentas));
+  }
+
+  paginasVentas(): number[] {
+    const total = this.totalPaginasVentas();
+    const actual = this.paginaVentas;
+    const paginas: number[] = [];
+    const inicio = Math.max(1, actual - 2);
+    const fin = Math.min(total, actual + 2);
+    for (let i = inicio; i <= fin; i++) {
+      paginas.push(i);
+    }
+    return paginas;
+  }
+
+  cambiarPaginaVentas(p: number): void {
+    if (p < 1 || p > this.totalPaginasVentas()) return;
+    if (p === this.paginaVentas) return;
+    this.paginaVentas = p;
+    this.cargarPeriodo();
+  }
+
   setFiltro(f: string): void {
     if (!this.filtrosValidos.includes(f as Filtro)) return;
     if (this.filtro === f && f !== 'rango') return;
     this.filtro = f as Filtro;
     this.offsetPeriodo = 0;
+    this.paginaVentas = 1;
     this.sincronizarFiltro();
     this.cargarPeriodo();
   }
@@ -212,6 +267,7 @@ export class CajaComponent implements OnInit, OnDestroy {
   periodoAnterior(): void {
     if (this.filtro === 'rango') return;
     this.offsetPeriodo++;
+    this.paginaVentas = 1;
     this.cargarPeriodo();
   }
 
@@ -219,6 +275,7 @@ export class CajaComponent implements OnInit, OnDestroy {
     if (this.filtro === 'rango') return;
     if (this.offsetPeriodo === 0) return;
     this.offsetPeriodo--;
+    this.paginaVentas = 1;
     this.cargarPeriodo();
   }
 
@@ -255,6 +312,7 @@ export class CajaComponent implements OnInit, OnDestroy {
       return;
     }
     this.sincronizarFiltro();
+    this.paginaVentas = 1;
     this.cargarPeriodo();
   }
 
