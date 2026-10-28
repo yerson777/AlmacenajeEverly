@@ -14,7 +14,7 @@ class CasilleroController extends Controller
     public function index(Request $request): JsonResponse
     {
         $query = Casillero::withCount([
-            'bolsas as bolsas_activas' => fn ($q) => $q->whereNotNull('posicion'),
+            'bolsas as bolsas_activas' => fn ($q) => $q->where('estado', Bolsa::ESTADO_PENDIENTE)->whereNotNull('posicion'),
         ])->orderBy('codigo');
 
         if ($request->has('activos') && $request->boolean('activos')) {
@@ -40,7 +40,7 @@ class CasilleroController extends Controller
     public function show(Casillero $casillero): JsonResponse
     {
         $casillero->loadCount([
-            'bolsas as bolsas_activas' => fn ($q) => $q->whereNotNull('posicion'),
+            'bolsas as bolsas_activas' => fn ($q) => $q->where('estado', Bolsa::ESTADO_PENDIENTE)->whereNotNull('posicion'),
         ]);
 
         return response()->json(['data' => $this->serialize($casillero)]);
@@ -63,7 +63,7 @@ class CasilleroController extends Controller
 
     public function destroy(Casillero $casillero): JsonResponse
     {
-        $activas = $casillero->bolsas()->whereNotNull('posicion')->count();
+        $activas = $casillero->bolsas()->where('estado', Bolsa::ESTADO_PENDIENTE)->whereNotNull('posicion')->count();
 
         if ($activas > 0) {
             return response()->json(['message' => 'No se puede eliminar un casillero con bolsas almacenadas.'], 422);

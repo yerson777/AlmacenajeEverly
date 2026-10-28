@@ -1,4 +1,4 @@
-const CACHE = 'everly-cache-v1';
+const CACHE = 'everly-cache-v3';
 
 self.addEventListener('install', () => {
   self.skipWaiting();
@@ -20,15 +20,20 @@ self.addEventListener('fetch', (event) => {
   if (req.url.includes('/api/')) return;
 
   event.respondWith(
-    caches.match(req).then((cached) => {
-      if (cached) return cached;
-      return fetch(req).then((res) => {
-        const clone = res.clone();
+    fetch(req)
+      .then((res) => {
         if (res.ok) {
+          const clone = res.clone();
           caches.open(CACHE).then((cache) => cache.put(req, clone));
         }
         return res;
-      });
-    })
+      })
+      .catch(() =>
+        caches.match(req).then((cached) => {
+          if (cached) return cached;
+          if (req.mode === 'navigate') return caches.match('/index.html');
+          return undefined;
+        })
+      )
   );
 });

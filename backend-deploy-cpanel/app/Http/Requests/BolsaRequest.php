@@ -30,7 +30,7 @@ class BolsaRequest extends FormRequest
     {
         return [
             'clienta_id' => 'required|exists:clientas,id',
-            'pedido_id' => 'required|exists:pedidos,id',
+            'pedido_id' => 'required|exists:pedidos,id|unique:bolsas,pedido_id',
             'codigo' => 'nullable|string|max:20|unique:bolsas,codigo',
             'casillero_id' => 'required|exists:casilleros,id',
             'posicion' => 'nullable|integer|min:1|max:30',
@@ -48,6 +48,7 @@ class BolsaRequest extends FormRequest
             'clienta_id.exists' => 'La clienta seleccionada no existe.',
             'pedido_id.required' => 'Debe seleccionar un pedido.',
             'pedido_id.exists' => 'El pedido seleccionado no existe.',
+            'pedido_id.unique' => 'Este pedido ya tiene una bolsa registrada.',
             'codigo.max' => 'El código no debe superar los :max caracteres.',
             'codigo.unique' => 'El código ya está en uso por otra bolsa.',
             'casillero_id.required' => 'Debe seleccionar un casillero.',

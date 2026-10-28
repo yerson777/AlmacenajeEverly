@@ -14,6 +14,7 @@ class CajaController extends Controller
     public function index(Request $request): JsonResponse
     {
         $hoy = CarbonImmutable::today();
+        $liquidacion = Fardo::liquidacion();
 
         $filtro = (string) $request->input('filtro', 'hoy');
         $desdeInput = $request->input('desde');
@@ -70,15 +71,18 @@ class CajaController extends Controller
                 'ganancia' => round($c['ganancia'], 2),
                 'porcentaje_recuperacion' => $c['pct'],
                 'estado_recuperacion' => $c['estado_recuperacion'],
+                'es_liquidacion' => $f->esLiquidacion(),
             ];
         })->values();
 
-        $capitalInvertidoTotal = $fardos->sum('capital_invertido');
-        $capitalRecuperadoTotal = $fardos->sum('capital_recuperado');
+        $fardosReales = $fardos->filter(fn ($f) => ! $f['es_liquidacion']);
+
+        $capitalInvertidoTotal = $fardosReales->sum('capital_invertido');
+        $capitalRecuperadoTotal = $fardosReales->sum('capital_recuperado');
         $capitalPendienteTotal = max(0.0, $capitalInvertidoTotal - $capitalRecuperadoTotal);
         $gananciaTotal = $fardos->sum('ganancia');
         $ventasTotales = $fardos->sum('ventas_acumuladas');
-        $fardosRecuperados = $fardos->filter(fn ($f) => $f['porcentaje_recuperacion'] >= 100 && $f['capital_invertido'] > 0)->count();
+        $fardosRecuperados = $fardosReales->filter(fn ($f) => $f['porcentaje_recuperacion'] >= 100 && $f['capital_invertido'] > 0)->count();
 
         $global = [
             'capital_invertido' => round($capitalInvertidoTotal, 2),
@@ -87,7 +91,7 @@ class CajaController extends Controller
             'ganancia' => round($gananciaTotal, 2),
             'ventas' => round($ventasTotales, 2),
             'porcentaje_recuperacion' => $capitalInvertidoTotal > 0 ? round($capitalRecuperadoTotal / $capitalInvertidoTotal * 100, 2) : 0.0,
-            'fardos' => $fardos->count(),
+            'fardos' => $fardosReales->count(),
             'fardos_recuperados' => $fardosRecuperados,
         ];
 
@@ -106,6 +110,7 @@ class CajaController extends Controller
                     'clienta_nombre' => $v->clienta?->nombre,
                     'fardo_codigo' => $v->fardo?->codigo,
                     'fardo_categoria' => $v->fardo?->categoria,
+                    'fardo_es_liquidacion' => (bool) $v->fardo?->esLiquidacion(),
                     'monto' => round((float) $v->monto, 2),
                     'forma_pago' => $v->forma_pago,
                     'estado' => $v->estado,
@@ -123,6 +128,7 @@ class CajaController extends Controller
                 'global' => $global,
                 'resumen' => $resumen,
                 'fardos' => $fardos,
+                'liquidacion' => $this->resumenLiquidacion($liquidacion, $hoy),
                 'ventas' => $historial,
                 'series' => [
                     'diario' => $this->porDias($hoy, 30),
@@ -131,6 +137,46 @@ class CajaController extends Controller
                 ],
             ],
         ]);
+    }
+
+    /**
+     * @return array<string, array{total: float, cantidad: int}>
+     */
+    private function resumenLiquidacion(Fardo $liquidacion, CarbonImmutable $hoy): array
+    {
+        $periodos = [
+            'hoy' => [$hoy, $hoy],
+            'semana' => [$hoy->startOfWeek(), $hoy->endOfWeek()],
+            'mes' => [$hoy->startOfMonth(), $hoy->endOfMonth()],
+        ];
+
+        $resultado = [];
+
+        foreach ($periodos as $clave => [$desde, $hasta]) {
+            $resultado[$clave] = $this->ventasDeFardo($liquidacion->id, $desde, $hasta);
+        }
+
+        $resultado['total'] = $this->ventasDeFardo($liquidacion->id);
+
+        return $resultado;
+    }
+
+    /**
+     * @return array{total: float, cantidad: int}
+     */
+    private function ventasDeFardo(int $fardoId, ?CarbonImmutable $desde = null, ?CarbonImmutable $hasta = null): array
+    {
+        $query = Venta::where('fardo_id', $fardoId)
+            ->where('estado', '!=', Venta::ESTADO_ANULADA);
+
+        if ($desde && $hasta) {
+            $query->whereBetween('fecha', [$desde->toDateString(), $hasta->toDateString()]);
+        }
+
+        return [
+            'total' => round((float) (clone $query)->sum('monto'), 2),
+            'cantidad' => (clone $query)->count(),
+        ];
     }
 
     /**

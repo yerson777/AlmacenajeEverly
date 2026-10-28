@@ -8,19 +8,22 @@ use App\Models\Venta;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 
 class CajaController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $hoy = CarbonImmutable::today();
+        $tz = config('app.timezone', 'America/La_Paz');
+        $hoy = CarbonImmutable::now($tz)->startOfDay();
         $liquidacion = Fardo::liquidacion();
 
         $filtro = (string) $request->input('filtro', 'hoy');
         $desdeInput = $request->input('desde');
         $hastaInput = $request->input('hasta');
+        $offset = (int) $request->input('offset', 0);
 
-        [$desde, $hasta] = $this->rangoParaFiltro($filtro, $desdeInput, $hastaInput, $hoy);
+        [$desde, $hasta] = $this->rangoParaFiltro($filtro, $desdeInput, $hastaInput, $hoy, $offset, $tz);
 
         $desdeStr = $desde->toDateString();
         $hastaStr = $hasta->toDateString();
@@ -146,7 +149,7 @@ class CajaController extends Controller
     {
         $periodos = [
             'hoy' => [$hoy, $hoy],
-            'semana' => [$hoy->startOfWeek(), $hoy->endOfWeek()],
+            'semana' => [$hoy->startOfWeek(Carbon::MONDAY), $hoy->endOfWeek(Carbon::SUNDAY)],
             'mes' => [$hoy->startOfMonth(), $hoy->endOfMonth()],
         ];
 
@@ -182,20 +185,23 @@ class CajaController extends Controller
     /**
      * @return array{0: CarbonImmutable, 1: CarbonImmutable}
      */
-    private function rangoParaFiltro(string $filtro, ?string $desdeInput, ?string $hastaInput, CarbonImmutable $hoy): array
+    private function rangoParaFiltro(string $filtro, ?string $desdeInput, ?string $hastaInput, CarbonImmutable $hoy, int $offset = 0, string $tz = 'America/La_Paz'): array
     {
         switch ($filtro) {
             case 'semana':
-                return [$hoy->startOfWeek(), $hoy->endOfWeek()];
+                $base = $hoy->subWeeks($offset);
+                return [$base->startOfWeek(Carbon::MONDAY), $base->endOfWeek(Carbon::SUNDAY)];
             case 'mes':
-                return [$hoy->startOfMonth(), $hoy->endOfMonth()];
+                $base = $hoy->subMonths($offset)->startOfMonth();
+                return [$base, $base->endOfMonth()];
             case 'rango':
-                $desde = $desdeInput ? CarbonImmutable::parse($desdeInput) : $hoy->subDays(29);
-                $hasta = $hastaInput ? CarbonImmutable::parse($hastaInput) : $hoy;
+                $desde = $desdeInput ? CarbonImmutable::parse($desdeInput, $tz) : $hoy->subDays(29);
+                $hasta = $hastaInput ? CarbonImmutable::parse($hastaInput, $tz) : $hoy;
 
                 return [$desde->startOfDay(), $hasta->endOfDay()];
             default:
-                return [$hoy, $hoy->endOfDay()];
+                $base = $hoy->subDays($offset);
+                return [$base, $base];
         }
     }
 

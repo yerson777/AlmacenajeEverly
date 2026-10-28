@@ -181,10 +181,11 @@ export class ApiService {
     return this.http.get<{ data: DashboardStats }>(`${this.base}/dashboard`);
   }
 
-  getCaja(filtro = 'hoy', desde?: string, hasta?: string): Observable<{ data: CajaStats }> {
+  getCaja(filtro = 'hoy', desde?: string, hasta?: string, offset?: number): Observable<{ data: CajaStats }> {
     let params = new HttpParams().set('filtro', filtro);
     if (desde) params = params.set('desde', desde);
     if (hasta) params = params.set('hasta', hasta);
+    if (offset !== undefined && offset !== null) params = params.set('offset', String(offset));
     return this.http.get<{ data: CajaStats }>(`${this.base}/caja`, { params });
   }
 

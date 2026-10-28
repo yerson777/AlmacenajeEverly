@@ -1,8 +1,11 @@
 <?php
 
+use App\Support\ErroresBd;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -21,5 +24,15 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        $exceptions->render(function (QueryException $e, Request $request) {
+            if (! $request->is('api/*') && ! $request->expectsJson()) {
+                return null;
+            }
+
+            $respuesta = ErroresBd::respuesta($e);
+            $estado = $respuesta['status'];
+            unset($respuesta['status']);
+
+            return response()->json($respuesta, $estado);
+        });
     })->create();

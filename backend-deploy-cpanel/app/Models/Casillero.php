@@ -25,6 +25,6 @@ class Casillero extends Model
 
     public function getBolsasActivasAttribute(): int
     {
-        return $this->bolsas()->whereNotNull('posicion')->count();
+        return $this->bolsas()->where('estado', Bolsa::ESTADO_PENDIENTE)->whereNotNull('posicion')->count();
     }
 }

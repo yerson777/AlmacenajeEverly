@@ -1,4 +1,4 @@
-const CACHE = 'everly-cache-v3';
+const CACHE = 'everly-cache-v4';
 
 self.addEventListener('install', () => {
   self.skipWaiting();

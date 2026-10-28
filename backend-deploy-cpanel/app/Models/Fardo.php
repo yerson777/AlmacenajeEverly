@@ -7,6 +7,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Fardo extends Model
 {
+    public const CODIGO_LIQUIDACION = 'LIQUIDACIÓN';
+
+    public const CATEGORIA_LIQUIDACION = 'Prendas de liquidación';
+
     protected $fillable = [
         'codigo',
         'categoria',
@@ -34,6 +38,30 @@ class Fardo extends Model
         return $this->ventas()->where('estado', '!=', Venta::ESTADO_ANULADA);
     }
 
+    public function esLiquidacion(): bool
+    {
+        return mb_strtoupper((string) $this->codigo) === self::CODIGO_LIQUIDACION;
+    }
+
+    /**
+     * Fardo fijo de liquidación: existe siempre para poder registrar
+     * ventas sueltas sin capital invertido. Todo lo vendido es ganancia.
+     */
+    public static function liquidacion(): self
+    {
+        return self::firstOrCreate(
+            ['codigo' => self::CODIGO_LIQUIDACION],
+            [
+                'categoria' => self::CATEGORIA_LIQUIDACION,
+                'descripcion' => 'Ventas de prendas sueltas y liquidaciones. No consume capital invertido.',
+                'fecha_compra' => null,
+                'capital_invertido' => 0,
+                'cantidad_prendas' => null,
+                'estado' => 'En venta',
+            ]
+        );
+    }
+
     /**
      * Lógica de capital: primero se recupera la inversión y solo
      * el excedente se considera ganancia. Nunca ganancia negativa.
@@ -41,6 +69,18 @@ class Fardo extends Model
     public function calcular(): array
     {
         $ventas = (float) $this->ventasActivas()->sum('monto');
+
+        if ($this->esLiquidacion()) {
+            return [
+                'ventas' => $ventas,
+                'capital_recuperado' => 0.0,
+                'capital_pendiente' => 0.0,
+                'ganancia' => $ventas,
+                'pct' => 0.0,
+                'estado_recuperacion' => 'Solo ganancia',
+            ];
+        }
+
         $capital = (float) $this->capital_invertido;
 
         $capitalRecuperado = min($ventas, $capital);

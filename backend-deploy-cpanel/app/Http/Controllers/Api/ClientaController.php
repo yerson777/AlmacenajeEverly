@@ -16,12 +16,17 @@ class ClientaController extends Controller
 
         if ($request->has('q') && $request->input('q') !== '') {
             $q = trim((string) $request->input('q'));
-            $query->where('nombre', 'like', "%{$q}%")
-                ->orWhere('telefono', 'like', "%{$q}%")
-                ->orWhere('email', 'like', "%{$q}%");
+            $query->where(function ($inner) use ($q) {
+                $inner->where('nombre', 'like', "%{$q}%")
+                    ->orWhere('telefono', 'like', "%{$q}%")
+                    ->orWhere('email', 'like', "%{$q}%");
+            });
         }
 
-        $clientas = $query->withCount('pedidos')->orderBy('nombre')->paginate(50);
+        $query->withCount('pedidos')->orderBy('nombre')->orderBy('id');
+
+        $perPage = 10;
+        $clientas = $query->paginate($perPage);
 
         return response()->json($clientas);
     }

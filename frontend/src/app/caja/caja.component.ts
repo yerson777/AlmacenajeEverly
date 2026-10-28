@@ -39,6 +39,7 @@ export class CajaComponent implements OnInit, OnDestroy {
   private readonly peticion = new PeticionCancelable();
 
   filtro: Filtro = 'hoy';
+  offsetPeriodo = 0;
   chartTab: 'dia' | 'semana' | 'mes' = 'dia';
   desde = '';
   hasta = '';
@@ -135,10 +136,11 @@ export class CajaComponent implements OnInit, OnDestroy {
     });
   }
 
-  private parametrosFiltro(): { desde?: string; hasta?: string } {
-    return this.filtro === 'rango'
-      ? { desde: this.desde, hasta: this.hasta }
-      : {};
+  private parametrosFiltro(): { desde?: string; hasta?: string; offset?: number } {
+    if (this.filtro === 'rango') {
+      return { desde: this.desde, hasta: this.hasta };
+    }
+    return { offset: this.offsetPeriodo };
   }
 
   cargar(): void {
@@ -148,8 +150,8 @@ export class CajaComponent implements OnInit, OnDestroy {
     this.error = '';
     this.errorFiltro = '';
 
-    const { desde, hasta } = this.parametrosFiltro();
-    this.peticion.ejecutar(this.api.getCaja(this.filtro, desde, hasta), {
+    const { desde, hasta, offset } = this.parametrosFiltro();
+    this.peticion.ejecutar(this.api.getCaja(this.filtro, desde, hasta, offset), {
       next: (res) => {
         this.datos = res.data;
         this.periodo = res.data;
@@ -177,8 +179,8 @@ export class CajaComponent implements OnInit, OnDestroy {
 
     this.cargandoFiltro = true;
     this.errorFiltro = '';
-    const { desde, hasta } = this.parametrosFiltro();
-    this.peticion.ejecutar(this.api.getCaja(this.filtro, desde, hasta), {
+    const { desde, hasta, offset } = this.parametrosFiltro();
+    this.peticion.ejecutar(this.api.getCaja(this.filtro, desde, hasta, offset), {
       next: (res) => {
         this.periodo = res.data;
       },
@@ -192,10 +194,48 @@ export class CajaComponent implements OnInit, OnDestroy {
   }
 
   setFiltro(f: string): void {
-    if (!this.filtrosValidos.includes(f as Filtro) || this.filtro === f) return;
+    if (!this.filtrosValidos.includes(f as Filtro)) return;
+    if (this.filtro === f && f !== 'rango') return;
     this.filtro = f as Filtro;
+    this.offsetPeriodo = 0;
     this.sincronizarFiltro();
     this.cargarPeriodo();
+  }
+
+  periodoAnterior(): void {
+    if (this.filtro === 'rango') return;
+    this.offsetPeriodo++;
+    this.cargarPeriodo();
+  }
+
+  periodoSiguiente(): void {
+    if (this.filtro === 'rango') return;
+    if (this.offsetPeriodo === 0) return;
+    this.offsetPeriodo--;
+    this.cargarPeriodo();
+  }
+
+  periodoLabel(): string {
+    const base = new Date();
+    if (this.filtro === 'hoy') {
+      const d = new Date(base.getTime() - this.offsetPeriodo * 24 * 60 * 60 * 1000);
+      return d.toLocaleDateString('es-BO', { day: '2-digit', month: 'short', year: 'numeric' });
+    }
+    if (this.filtro === 'semana') {
+      const d = new Date(base.getTime() - this.offsetPeriodo * 7 * 24 * 60 * 60 * 1000);
+      const inicio = new Date(d);
+      const day = inicio.getDay();
+      const diff = (day === 0 ? -6 : 1) - day;
+      inicio.setDate(inicio.getDate() + diff);
+      const fin = new Date(inicio);
+      fin.setDate(fin.getDate() + 6);
+      return `Semana · ${inicio.toLocaleDateString('es-BO', { day: '2-digit', month: 'short' })} – ${fin.toLocaleDateString('es-BO', { day: '2-digit', month: 'short', year: 'numeric' })}`;
+    }
+    if (this.filtro === 'mes') {
+      const d = new Date(base.getFullYear(), base.getMonth() - this.offsetPeriodo, 1);
+      return d.toLocaleDateString('es-BO', { month: 'long', year: 'numeric' });
+    }
+    return 'Rango';
   }
 
   aplicarRango(): void {
