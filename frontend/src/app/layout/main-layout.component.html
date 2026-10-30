@@ -9,7 +9,7 @@
   >
     <!-- Logo -->
     <div [class.justify-center]="menuColapsado" class="flex items-center gap-2.5 px-4 py-5">
-      <img src="everly.png" alt="Everly" class="h-9 w-9 shrink-0 rounded-lg bg-white" />
+      <img src="everly.jpg" alt="Everly" class="h-9 w-9 shrink-0 rounded-lg bg-white" />
       @if (!menuColapsado) {
         <div class="leading-tight">
           <p class="text-sm font-bold tracking-wide text-white">EVERLY</p>
@@ -23,6 +23,7 @@
       @for (item of itemsVisibles; track item.route) {
         <a
           routerLink="{{ item.route }}"
+          [queryParams]="sinFiltros"
           routerLinkActive="active"
           [routerLinkActiveOptions]="{ exact: item.route === '/dashboard' }"
           [class.justify-center]="menuColapsado"
@@ -95,7 +96,7 @@
   >
     <div class="flex items-center justify-between px-4 py-5">
       <div class="flex items-center gap-2.5">
-        <img src="everly.png" alt="Everly" class="h-9 w-9 rounded-lg bg-white" />
+        <img src="everly.jpg" alt="Everly" class="h-9 w-9 rounded-lg bg-white" />
         <div class="leading-tight">
           <p class="text-sm font-bold tracking-wide text-white">EVERLY</p>
           <p class="text-[11px] uppercase tracking-widest text-white/60">Almacenaje</p>
@@ -113,6 +114,7 @@
       @for (item of itemsVisibles; track item.route) {
         <a
           routerLink="{{ item.route }}"
+          [queryParams]="sinFiltros"
           routerLinkActive="active"
           [routerLinkActiveOptions]="{ exact: item.route === '/dashboard' }"
           class="nav-link flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm"
@@ -153,7 +155,7 @@
         <i class="bi bi-list text-xl"></i>
       </button>
       <div class="flex items-center gap-2">
-        <img src="everly.png" alt="Everly" class="h-7 w-7 rounded bg-white" />
+        <img src="everly.jpg" alt="Everly" class="h-7 w-7 rounded bg-white" />
         <p class="text-sm font-bold tracking-wide text-white">EVERLY</p>
         <p class="text-[10px] uppercase tracking-widest text-white/60">Almacenaje</p>
       </div>

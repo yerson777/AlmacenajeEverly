@@ -114,7 +114,14 @@
 }
 
 @if (error) {
-  <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{{ error }}</div>
+  <div class="flex items-center justify-between gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+    <span>{{ error }}</span>
+    <button
+      type="button"
+      class="shrink-0 rounded-md px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-100"
+      (click)="cargar()"
+    >Reintentar</button>
+  </div>
 }
 
 @if (!error) {
@@ -166,7 +173,7 @@
           </tr>
         } @empty {
           <tr>
-            <td colspan="6" class="px-4 py-8 text-center text-gray-400">No hay movimientos registrados.</td>
+            <td colspan="6" class="px-4 py-8 text-center text-gray-400">{{ textoVacio() }}</td>
           </tr>
         }
       </tbody>
@@ -220,17 +227,20 @@
       </div>
     } @empty {
       <div class="rounded-xl border border-dashed border-gray-300 bg-white px-4 py-10 text-center text-sm text-gray-400">
-        No hay movimientos registrados.
+        {{ textoVacio() }}
       </div>
     }
   </div>
 
   @if (total > 0) {
-    <div class="mt-3 flex items-center justify-between gap-2 text-sm text-gray-600 md:hidden">
-      <div>Mostrando {{ desde }}-{{ hasta }} de {{ total }}</div>
-      <div class="flex items-center gap-1">
-        <button class="rounded-lg px-2 py-1 hover:bg-gray-100 disabled:opacity-50" (click)="cambiarPagina(pagina-1)" [disabled]="pagina <= 1">Anterior</button>
-        <button class="rounded-lg px-2 py-1 hover:bg-gray-100 disabled:opacity-50" (click)="cambiarPagina(pagina+1)" [disabled]="pagina >= totalPaginas()">Siguiente</button>
+    <div class="mt-3 flex flex-col items-center gap-2 text-sm text-gray-600 md:hidden">
+      <div class="whitespace-nowrap text-center">Mostrando {{ desde }}-{{ hasta }} de {{ total }}</div>
+      <div class="flex flex-wrap items-center justify-center gap-1">
+        <button class="h-9 rounded-lg px-3 py-2 hover:bg-gray-100 disabled:opacity-50" (click)="cambiarPagina(pagina-1)" [disabled]="pagina <= 1">Anterior</button>
+        @for (p of paginas(); track p) {
+          <button class="h-9 min-w-9 rounded-lg px-2 py-2" [class.bg-primary-600]="p === pagina" [class.text-white]="p === pagina" [class.hover:bg-gray-100]="p !== pagina" (click)="cambiarPagina(p)">{{ p }}</button>
+        }
+        <button class="h-9 rounded-lg px-3 py-2 hover:bg-gray-100 disabled:opacity-50" (click)="cambiarPagina(pagina+1)" [disabled]="pagina >= totalPaginas()">Siguiente</button>
       </div>
     </div>
   }

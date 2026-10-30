@@ -3,9 +3,10 @@ import { FormsModule } from '@angular/forms';
 import { ApiService } from '../services/api.service';
 import { Casillero, CasilleroPosicion } from '../models/models';
 import { ModalErrorComponent } from '../shared/modal-error.component';
-import { aplicarErrorFormulario } from '../utils/api-errors';
+import { aplicarErrorFormulario, mensajeError } from '../utils/api-errors';
 import { validarTodo, errVisible, requerido, noSoloEspacios, maxLong, entero, positivo, ReglasPorCampo } from '../utils/validators';
 import { autoDismiss } from '../utils/auto-dismiss';
+import { FILTROS_POR_DEFECTO, aplicarFiltrosPorDefecto } from '../utils/filtros';
 
 @Component({
     selector: 'app-casilleros',
@@ -16,7 +17,7 @@ import { autoDismiss } from '../utils/auto-dismiss';
 export class CasillerosComponent implements OnInit {
   casilleros: Casillero[] = [];
   posiciones: CasilleroPosicion[] = [];
-  pagina = 1;
+  pagina = FILTROS_POR_DEFECTO.casilleros.pagina;
   porPagina = 9;
   casilleroSeleccionado: Casillero | null = null;
   error = '';
@@ -46,6 +47,7 @@ export class CasillerosComponent implements OnInit {
   constructor(private api: ApiService) {}
 
   ngOnInit(): void {
+    aplicarFiltrosPorDefecto(this, 'casilleros');
     this.cargar();
   }
 
@@ -82,7 +84,7 @@ export class CasillerosComponent implements OnInit {
         if (this.pagina > this.totalPaginas) this.pagina = this.totalPaginas || 1;
         if (this.pagina < 1) this.pagina = 1;
       },
-      error: (e) => (this.error = e.message),
+      error: (e) => (this.error = mensajeError(e)),
     });
   }
 
@@ -175,7 +177,7 @@ export class CasillerosComponent implements OnInit {
               if (this.pagina < 1) this.pagina = 1;
             }
           },
-          error: (e) => (this.error = e.message),
+          error: (e) => (this.error = mensajeError(e)),
         });
       },
       error: (e) => aplicarErrorFormulario(e, this),
@@ -197,10 +199,10 @@ export class CasillerosComponent implements OnInit {
             if (this.pagina > this.totalPaginas) this.pagina = this.totalPaginas || 1;
             if (this.pagina < 1) this.pagina = 1;
           },
-          error: (e) => (this.error = e.message),
+          error: (e) => (this.error = mensajeError(e)),
         });
       },
-      error: (e) => (this.error = e.message),
+      error: (e) => (this.error = mensajeError(e)),
     });
   }
 
@@ -228,10 +230,10 @@ export class CasillerosComponent implements OnInit {
             if (this.pagina > this.totalPaginas) this.pagina = this.totalPaginas;
             if (this.pagina < 1) this.pagina = 1;
           },
-          error: (e) => (this.error = e.message),
+          error: (e) => (this.error = mensajeError(e)),
         });
       },
-      error: (e) => (this.error = e.message),
+      error: (e) => (this.error = mensajeError(e)),
     });
   }
 
@@ -240,7 +242,7 @@ export class CasillerosComponent implements OnInit {
     this.posiciones = [];
     this.api.getPosiciones(c.id).subscribe({
       next: (res) => (this.posiciones = res.data),
-      error: (e) => (this.error = e.message),
+      error: (e) => (this.error = mensajeError(e)),
     });
   }
 

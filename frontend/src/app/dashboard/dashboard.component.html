@@ -10,9 +10,14 @@
   </div>
 </div>
 
-@if (error && !stats) {
-  <div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-    {{ error }}
+@if (errorInicio) {
+  <div class="mb-4 flex items-center justify-between gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+    <span>{{ errorInicio }}</span>
+    <button
+      type="button"
+      class="shrink-0 rounded-md px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-100"
+      (click)="cargarInicio()"
+    >Reintentar</button>
   </div>
 }
 
@@ -332,14 +337,14 @@
       }
     </div>
     @if (totalPendientes > 0) {
-      <div class="flex flex-wrap items-center justify-between gap-2 border-t border-gray-200 px-5 py-3 text-sm text-gray-600">
-        <div>Mostrando {{ desdePendientes }}-{{ hastaPendientes }} de {{ totalPendientes }}</div>
-        <div class="flex items-center gap-1">
-          <button class="rounded-lg px-2 py-1 hover:bg-gray-100 disabled:opacity-50" (click)="cambiarPaginaPendientes(paginaPendientes-1)" [disabled]="paginaPendientes <= 1">Anterior</button>
+      <div class="flex flex-col items-center gap-2 border-t border-gray-200 px-5 py-3 text-sm text-gray-600 md:flex-row md:flex-wrap md:items-center md:justify-between">
+        <div class="whitespace-nowrap text-center">Mostrando {{ desdePendientes }}-{{ hastaPendientes }} de {{ totalPendientes }}</div>
+        <div class="flex flex-wrap items-center justify-center gap-1">
+          <button class="h-9 rounded-lg px-3 py-2 hover:bg-gray-100 disabled:opacity-50 md:h-auto md:px-2 md:py-1" (click)="cambiarPaginaPendientes(paginaPendientes-1)" [disabled]="paginaPendientes <= 1">Anterior</button>
           @for (p of paginasPendientes(); track p) {
-            <button class="rounded-lg px-2 py-1" [class.bg-primary-600]="p === paginaPendientes" [class.text-white]="p === paginaPendientes" [class.hover:bg-gray-100]="p !== paginaPendientes" (click)="cambiarPaginaPendientes(p)">{{ p }}</button>
+            <button class="h-9 min-w-9 rounded-lg px-2 py-2 md:h-auto md:min-w-0 md:py-1" [class.bg-primary-600]="p === paginaPendientes" [class.text-white]="p === paginaPendientes" [class.hover:bg-gray-100]="p !== paginaPendientes" (click)="cambiarPaginaPendientes(p)">{{ p }}</button>
           }
-          <button class="rounded-lg px-2 py-1 hover:bg-gray-100 disabled:opacity-50" (click)="cambiarPaginaPendientes(paginaPendientes+1)" [disabled]="paginaPendientes >= totalPaginasPendientes()">Siguiente</button>
+          <button class="h-9 rounded-lg px-3 py-2 hover:bg-gray-100 disabled:opacity-50 md:h-auto md:px-2 md:py-1" (click)="cambiarPaginaPendientes(paginaPendientes+1)" [disabled]="paginaPendientes >= totalPaginasPendientes()">Siguiente</button>
         </div>
       </div>
     }

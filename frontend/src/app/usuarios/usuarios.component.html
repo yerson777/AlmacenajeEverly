@@ -21,7 +21,10 @@
 @if (error) {
   <div class="mb-3 flex items-center justify-between gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
     <span>{{ error }}</span>
-    <button class="rounded-md px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-100" (click)="error = ''">Cerrar</button>
+    <span class="flex shrink-0 items-center gap-1">
+      <button class="rounded-md px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-100" (click)="cargar()">Reintentar</button>
+      <button class="rounded-md px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-100" (click)="error = ''">Cerrar</button>
+    </span>
   </div>
 }
 @if (mensaje) {

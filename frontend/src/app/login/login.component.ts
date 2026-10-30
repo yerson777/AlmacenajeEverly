@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 import { validarTodo, errVisible, requerido, emailOk, minLong, ReglasPorCampo } from '../utils/validators';
+import { mensajeError } from '../utils/api-errors';
 
 @Component({
     selector: 'app-login',
@@ -56,10 +57,7 @@ export class LoginComponent {
           this.intentado = true;
           return;
         }
-        this.error =
-          e?.error?.errors?.email?.[0] ||
-          e?.error?.message ||
-          'No se pudo iniciar sesión. Verifica tus credenciales.';
+        this.error = mensajeError(e, 'No se pudo iniciar sesión. Verifica tus credenciales.');
       },
     });
   }

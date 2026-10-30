@@ -7,6 +7,7 @@ import { ModalErrorComponent } from '../shared/modal-error.component';
 import { aplicarErrorFormulario, mensajeError } from '../utils/api-errors';
 import { validarTodo, errVisible, requerido, maxLong, fechaValida, entero, ReglasPorCampo } from '../utils/validators';
 import { autoDismiss } from '../utils/auto-dismiss';
+import { FILTROS_POR_DEFECTO, aplicarFiltrosPorDefecto, limpiarFiltrosModulo } from '../utils/filtros';
 import { PeticionCancelable } from '../utils/peticion-cancelable';
 import { Subject, Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
@@ -25,7 +26,7 @@ export class BolsasComponent implements OnInit, OnDestroy {
   cargandoPedidos = false;
   cargandoLista = false;
   private readonly peticionLista = new PeticionCancelable();
-  q = '';
+  q = FILTROS_POR_DEFECTO.bolsas.q;
   private qSubject = new Subject<string>();
   private qSub?: Subscription;
   error = '';
@@ -37,12 +38,12 @@ export class BolsasComponent implements OnInit, OnDestroy {
   guardando = false;
   errVisible = errVisible;
 
-  tab = 'pendientes';
-  filtroMes: number | null = null;
-  filtroAnio: number | null = null;
-  filtroCasilleroId: number | null = null;
-  filtroUbicacion = '';
-  pagina = 1;
+  tab = FILTROS_POR_DEFECTO.bolsas.tab;
+  filtroMes: number | null = FILTROS_POR_DEFECTO.bolsas.filtroMes;
+  filtroAnio: number | null = FILTROS_POR_DEFECTO.bolsas.filtroAnio;
+  filtroCasilleroId: number | null = FILTROS_POR_DEFECTO.bolsas.filtroCasilleroId;
+  filtroUbicacion = FILTROS_POR_DEFECTO.bolsas.filtroUbicacion;
+  pagina = FILTROS_POR_DEFECTO.bolsas.pagina;
   porPagina = 10;
   total = 0;
   desde = 0;
@@ -92,23 +93,11 @@ export class BolsasComponent implements OnInit, OnDestroy {
   constructor(private api: ApiService) {}
 
   ngOnInit(): void {
-    this.pagina = 1;
+    limpiarFiltrosModulo('bolsas');
+    aplicarFiltrosPorDefecto(this, 'bolsas');
     const anioActual = new Date().getFullYear();
     for (let i = 0; i < 5; i++) {
       this.anios.push(anioActual - i);
-    }
-
-    const guardados = localStorage.getItem('bolsas_filtros');
-    if (guardados) {
-      try {
-        const g = JSON.parse(guardados);
-        if (g.tab) this.tab = g.tab;
-        if (g.filtroMes !== undefined) this.filtroMes = g.filtroMes;
-        if (g.filtroAnio !== undefined) this.filtroAnio = g.filtroAnio;
-        if (g.filtroCasilleroId !== undefined) this.filtroCasilleroId = g.filtroCasilleroId;
-        if (g.filtroUbicacion !== undefined) this.filtroUbicacion = g.filtroUbicacion;
-        if (g.q) this.q = g.q;
-      } catch {}
     }
 
     this.qSub = this.qSubject.pipe(debounceTime(300), distinctUntilChanged()).subscribe(() => {
@@ -118,14 +107,23 @@ export class BolsasComponent implements OnInit, OnDestroy {
     });
 
     this.cargar();
+    this.cargarCatalogos();
+  }
+
+  cargarCatalogos(): void {
     this.api.getCasilleros(true).subscribe({
       next: (res) => (this.casilleros = res.data),
-      error: (e) => (this.error = e.message),
+      error: (e) => (this.error = mensajeError(e)),
     });
     this.api.getClientas().subscribe({
       next: (res) => (this.clientas = res.data),
-      error: (e) => (this.error = e.message),
+      error: (e) => (this.error = mensajeError(e)),
     });
+  }
+
+  reintentar(): void {
+    this.cargar();
+    this.cargarCatalogos();
   }
 
   ngOnDestroy(): void {
@@ -199,6 +197,13 @@ export class BolsasComponent implements OnInit, OnDestroy {
     this.pagina = 1;
     this.guardarFiltros();
     this.cargar();
+  }
+
+  textoVacio(): string {
+    if (this.q.trim()) return 'No se encontraron bolsas con esa búsqueda.';
+    if (this.tab === 'pendientes') return 'No hay bolsas pendientes.';
+    if (this.tab === 'entregadas') return 'No hay bolsas entregadas.';
+    return 'No hay bolsas registradas.';
   }
 
   cambiarPagina(p: number): void {
@@ -459,7 +464,7 @@ export class BolsasComponent implements OnInit, OnDestroy {
         this.mostrarMensaje(res.message);
         this.cargar();
       },
-      error: (e) => (this.error = e.message),
+      error: (e) => (this.error = mensajeError(e)),
     });
   }
 
@@ -509,7 +514,7 @@ export class BolsasComponent implements OnInit, OnDestroy {
   verDetalle(b: Bolsa): void {
     this.api.getBolsa(b.id).subscribe({
       next: (res) => (this.detalle = res.data),
-      error: (e) => (this.error = e.message),
+      error: (e) => (this.error = mensajeError(e)),
     });
   }
 
@@ -520,7 +525,7 @@ export class BolsasComponent implements OnInit, OnDestroy {
         this.mostrarMensaje(res.message);
         this.cargar();
       },
-      error: (e) => (this.error = e.message),
+      error: (e) => (this.error = mensajeError(e)),
     });
   }
 

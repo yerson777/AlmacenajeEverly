@@ -1,5 +1,94 @@
 const PREFIJO = 'casillero_filtro_';
 
+export type ModuloFiltros =
+  | 'caja'
+  | 'bolsas'
+  | 'pedidos'
+  | 'movimientos'
+  | 'clientas'
+  | 'casilleros'
+  | 'dashboard';
+
+export const FILTROS_POR_DEFECTO = {
+  caja: {
+    filtro: 'hoy',
+    offsetPeriodo: 0,
+    chartTab: 'dia',
+    periodoLiquidacion: 'hoy',
+    offsetLiquidacion: 0,
+    tipoFardo: 'activos',
+    busquedaFardo: '',
+    vistaFardos: 'lista',
+    paginaFardos: 1,
+    paginaVentas: 1,
+  },
+  bolsas: {
+    tab: 'pendientes',
+    filtroMes: null,
+    filtroAnio: null,
+    filtroCasilleroId: null,
+    filtroUbicacion: '',
+    q: '',
+    pagina: 1,
+  },
+  pedidos: {
+    tab: 'pendientes',
+    filtroMes: null,
+    filtroAnio: null,
+    filtroCobro: '',
+    q: '',
+    pagina: 1,
+  },
+  movimientos: {
+    filtroTipo: '',
+    q: '',
+    pagina: 1,
+  },
+  clientas: {
+    q: '',
+    pagina: 1,
+  },
+  casilleros: {
+    pagina: 1,
+  },
+  dashboard: {
+    q: '',
+    paginaPendientes: 1,
+  },
+};
+
+const CLAVES_PERSISTIDAS: Record<ModuloFiltros, readonly string[]> = {
+  caja: [
+    'caja_filtro',
+    'caja_desde',
+    'caja_hasta',
+    'caja_chart_tab',
+    'caja_periodo_liquidacion',
+    'caja_vista_fardos',
+  ],
+  bolsas: ['bolsas_filtros'],
+  pedidos: ['pedidos_filtros'],
+  movimientos: ['movimientos_filtro'],
+  clientas: ['clientas_filtros'],
+  casilleros: [],
+  dashboard: [],
+};
+
+export function limpiarFiltrosModulo(modulo: ModuloFiltros): void {
+  for (const clave of CLAVES_PERSISTIDAS[modulo]) {
+    try {
+      localStorage.removeItem(clave);
+      localStorage.removeItem(PREFIJO + clave);
+    } catch {
+      // localStorage puede no estar disponible.
+    }
+  }
+}
+
+export function aplicarFiltrosPorDefecto(destino: object, modulo: ModuloFiltros): void {
+  Object.assign(destino, FILTROS_POR_DEFECTO[modulo]);
+}
+
 function urlActual(): URL {
   return new URL(window.location.href);
 }

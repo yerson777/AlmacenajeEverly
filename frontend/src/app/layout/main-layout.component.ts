@@ -16,6 +16,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
   hoverDisponible = typeof window !== 'undefined' && !!window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
   colapsada = this.hoverDisponible ? true : localStorage.getItem('everly_menu') === '1';
   menuExpandidoHover = false;
+  readonly sinFiltros = {};
   private temporizadorColapso?: ReturnType<typeof setTimeout>;
   navItems = [
     { label: 'Inicio', route: '/dashboard', icon: 'bi-speedometer2' },

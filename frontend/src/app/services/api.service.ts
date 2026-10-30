@@ -3,7 +3,7 @@ import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http'
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
-import { mensajeSeguro } from '../utils/api-errors';
+import { mensajeErrorHttp } from '../utils/api-errors';
 import { Bolsa, CajaStats, Casillero, CasilleroPosicion, Clienta, DashboardStats, Fardo, Movimiento, Paginated, Pedido, Usuario, Venta } from '../models/models';
 
 interface ApiError extends Error {
@@ -286,18 +286,10 @@ export class ApiService {
   }
 
   private handleError(error: HttpErrorResponse): Observable<never> {
-    let message = 'Ha ocurrido un error inesperado.';
-    const err = new Error(message) as ApiError;
+    const err = new Error(mensajeErrorHttp(error)) as ApiError;
     if (error.status === 422 && error.error?.errors) {
       err.errors = error.error.errors as Record<string, string[]>;
-      const first = Object.values(err.errors)[0];
-      message = Array.isArray(first) && first.length ? first[0] : String(first ?? message);
-    } else if (error.error?.message && typeof error.error.message === 'string') {
-      message = error.error.message;
-    } else if (error.status === 0) {
-      message = 'No se pudo conectar con el servidor.';
     }
-    err.message = mensajeSeguro(message);
     console.error(error);
     return throwError(() => err);
   }

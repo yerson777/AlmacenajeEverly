@@ -4,6 +4,8 @@ import { ApiService } from '../services/api.service';
 import { Bolsa, CajaStats, Casillero, DashboardStats } from '../models/models';
 import { CommonModule } from '@angular/common';
 import { autoDismiss } from '../utils/auto-dismiss';
+import { FILTROS_POR_DEFECTO, aplicarFiltrosPorDefecto } from '../utils/filtros';
+import { mensajeError } from '../utils/api-errors';
 
 @Component({
     selector: 'app-dashboard',
@@ -15,16 +17,17 @@ export class DashboardComponent implements OnInit {
   stats: DashboardStats | null = null;
   casilleros: Casillero[] = [];
   pendientes: Bolsa[] = [];
-  q = '';
+  q = FILTROS_POR_DEFECTO.dashboard.q;
   resultados: Bolsa[] = [];
   buscando = false;
   cargando = false;
   cargandoPendientes = false;
   error = '';
+  errorInicio = '';
   mensaje = '';
   foto: Bolsa | null = null;
   cargandoFoto = false;
-  paginaPendientes = 1;
+  paginaPendientes = FILTROS_POR_DEFECTO.dashboard.paginaPendientes;
   porPaginaPendientes = 10;
   totalPendientes = 0;
   desdePendientes = 0;
@@ -34,14 +37,21 @@ export class DashboardComponent implements OnInit {
   constructor(private api: ApiService) {}
 
   ngOnInit(): void {
-    this.paginaPendientes = 1;
+    aplicarFiltrosPorDefecto(this, 'dashboard');
+    this.resultados = [];
+    this.cargarInicio();
+  }
+
+  cargarInicio(): void {
+    this.error = '';
+    this.errorInicio = '';
     this.api.getDashboard().subscribe({
       next: (res) => (this.stats = res.data),
-      error: (e) => (this.error = e.message),
+      error: (e) => (this.errorInicio = mensajeError(e)),
     });
     this.api.getCasilleros(true).subscribe({
       next: (res) => (this.casilleros = res.data),
-      error: (e) => (this.error = e.message),
+      error: (e) => (this.errorInicio = mensajeError(e)),
     });
     this.cargarPendientes();
   }
@@ -64,7 +74,7 @@ export class DashboardComponent implements OnInit {
         this.cargandoPendientes = false;
       },
       error: (e) => {
-        this.error = e.message;
+        this.errorInicio = mensajeError(e);
         this.cargandoPendientes = false;
       },
     });
@@ -204,7 +214,7 @@ export class DashboardComponent implements OnInit {
       },
       error: (e) => {
         this.buscando = false;
-        this.error = e.message;
+        this.error = mensajeError(e);
       },
     });
   }
@@ -219,7 +229,7 @@ export class DashboardComponent implements OnInit {
       },
       error: (e) => {
         this.cargandoFoto = false;
-        this.error = e.message;
+        this.error = mensajeError(e);
       },
     });
   }

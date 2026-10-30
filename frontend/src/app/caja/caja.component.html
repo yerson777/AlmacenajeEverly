@@ -23,7 +23,10 @@
 @if (error) {
   <div class="mb-3 flex items-center justify-between gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
     <span>{{ error }}</span>
-    <button class="rounded-md px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-100" (click)="error = ''">Cerrar</button>
+    <span class="flex shrink-0 items-center gap-1">
+      <button class="rounded-md px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-100" (click)="cargar()">Reintentar</button>
+      <button class="rounded-md px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-100" (click)="error = ''">Cerrar</button>
+    </span>
   </div>
 }
 @if (mensaje) {
@@ -597,11 +600,11 @@
     }
 
     @if (fardosFiltrados.length > 0) {
-      <div class="mt-3 flex flex-wrap items-center justify-between gap-2">
-        <p class="text-xs text-gray-500">Mostrando {{ rangoFardos }}</p>
-        <div class="flex items-center gap-1">
+      <div class="mt-3 flex flex-col items-center gap-2 md:flex-row md:flex-wrap md:items-center md:justify-between">
+        <p class="whitespace-nowrap text-center text-xs text-gray-500">Mostrando {{ rangoFardos }}</p>
+        <div class="flex flex-wrap items-center justify-center gap-1">
           <button
-            class="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-300 text-gray-600 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+            class="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-300 text-gray-600 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 md:h-8 md:w-8"
             [disabled]="paginaFardos <= 1"
             (click)="cambiarPaginaFardos(-1)"
             title="Página anterior"
@@ -610,7 +613,7 @@
           </button>
           @for (p of paginasFardos; track p) {
             <button
-              class="flex h-8 min-w-8 items-center justify-center rounded-lg border px-2 text-xs font-semibold transition-colors"
+              class="flex h-9 min-w-9 items-center justify-center rounded-lg border px-2 text-xs font-semibold transition-colors md:h-8 md:min-w-8"
               [class.border-primary-600]="p === paginaFardos"
               [class.bg-primary-600]="p === paginaFardos"
               [class.text-white]="p === paginaFardos"
@@ -620,7 +623,7 @@
             >{{ p }}</button>
           }
           <button
-            class="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-300 text-gray-600 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+            class="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-300 text-gray-600 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 md:h-8 md:w-8"
             [disabled]="paginaFardos >= totalPaginasFardos"
             (click)="cambiarPaginaFardos(1)"
             title="Página siguiente"
@@ -765,11 +768,14 @@
       </div>
 
       @if (totalVentas > 0) {
-        <div class="flex items-center justify-between gap-2 border-t border-gray-200 px-4 py-3 text-sm text-gray-600 md:hidden">
-          <div>Mostrando {{ desdeVentas }}-{{ hastaVentas }} de {{ totalVentas }}</div>
-          <div class="flex items-center gap-1">
-            <button class="rounded-lg px-2 py-1 hover:bg-gray-100 disabled:opacity-50" (click)="cambiarPaginaVentas(paginaVentas-1)" [disabled]="paginaVentas <= 1">Anterior</button>
-            <button class="rounded-lg px-2 py-1 hover:bg-gray-100 disabled:opacity-50" (click)="cambiarPaginaVentas(paginaVentas+1)" [disabled]="paginaVentas >= totalPaginasVentas()">Siguiente</button>
+        <div class="flex flex-col items-center gap-2 border-t border-gray-200 px-4 py-3 text-sm text-gray-600 md:hidden">
+          <div class="whitespace-nowrap text-center">Mostrando {{ desdeVentas }}-{{ hastaVentas }} de {{ totalVentas }}</div>
+          <div class="flex flex-wrap items-center justify-center gap-1">
+            <button class="h-9 rounded-lg px-3 py-2 hover:bg-gray-100 disabled:opacity-50" (click)="cambiarPaginaVentas(paginaVentas-1)" [disabled]="paginaVentas <= 1">Anterior</button>
+            @for (p of paginasVentas(); track p) {
+              <button class="h-9 min-w-9 rounded-lg px-2 py-2" [class.bg-primary-600]="p === paginaVentas" [class.text-white]="p === paginaVentas" [class.hover:bg-gray-100]="p !== paginaVentas" (click)="cambiarPaginaVentas(p)">{{ p }}</button>
+            }
+            <button class="h-9 rounded-lg px-3 py-2 hover:bg-gray-100 disabled:opacity-50" (click)="cambiarPaginaVentas(paginaVentas+1)" [disabled]="paginaVentas >= totalPaginasVentas()">Siguiente</button>
           </div>
         </div>
       }

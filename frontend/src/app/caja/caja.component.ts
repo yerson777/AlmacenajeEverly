@@ -3,10 +3,10 @@ import { FormsModule } from '@angular/forms';
 import { ApiService } from '../services/api.service';
 import { CajaStats, Fardo, ResumenLiquidacion, SerieCaja, Venta } from '../models/models';
 import { ModalErrorComponent } from '../shared/modal-error.component';
-import { aplicarErrorFormulario } from '../utils/api-errors';
+import { aplicarErrorFormulario, mensajeError } from '../utils/api-errors';
 import { validarTodo, errVisible, requerido, maxLong, positivo, fechaValida, ReglasPorCampo } from '../utils/validators';
 import { autoDismiss } from '../utils/auto-dismiss';
-import { guardarFiltro, leerFiltro, leerPreferencia, leerValorFiltro, recordarPreferencia } from '../utils/filtros';
+import { FILTROS_POR_DEFECTO, aplicarFiltrosPorDefecto, guardarFiltro, limpiarFiltrosModulo, recordarPreferencia } from '../utils/filtros';
 import { PeticionCancelable } from '../utils/peticion-cancelable';
 
 type Filtro = 'hoy' | 'semana' | 'mes' | 'rango';
@@ -38,24 +38,24 @@ export class CajaComponent implements OnInit, OnDestroy {
   private readonly filtrosValidos: readonly Filtro[] = ['hoy', 'semana', 'mes', 'rango'];
   private readonly peticion = new PeticionCancelable();
 
-  filtro: Filtro = 'hoy';
-  offsetPeriodo = 0;
-  chartTab: 'dia' | 'semana' | 'mes' = 'dia';
+  filtro: Filtro = FILTROS_POR_DEFECTO.caja.filtro as Filtro;
+  offsetPeriodo = FILTROS_POR_DEFECTO.caja.offsetPeriodo;
+  chartTab: 'dia' | 'semana' | 'mes' = FILTROS_POR_DEFECTO.caja.chartTab as 'dia' | 'semana' | 'mes';
   desde = '';
   hasta = '';
 
-  tipoFardo: TipoFardo = 'activos';
-  busquedaFardo = '';
-  vistaFardos: VistaFardos = 'lista';
-  paginaFardos = 1;
+  tipoFardo: TipoFardo = FILTROS_POR_DEFECTO.caja.tipoFardo as TipoFardo;
+  busquedaFardo = FILTROS_POR_DEFECTO.caja.busquedaFardo;
+  vistaFardos: VistaFardos = FILTROS_POR_DEFECTO.caja.vistaFardos as VistaFardos;
+  paginaFardos = FILTROS_POR_DEFECTO.caja.paginaFardos;
   readonly porPaginaFardos = 6;
-  paginaVentas = 1;
+  paginaVentas = FILTROS_POR_DEFECTO.caja.paginaVentas;
   porPaginaVentas = 10;
   totalVentas = 0;
   desdeVentas = 0;
   hastaVentas = 0;
-  periodoLiquidacion: PeriodoLiquidacion = 'hoy';
-  offsetLiquidacion = 0;
+  periodoLiquidacion: PeriodoLiquidacion = FILTROS_POR_DEFECTO.caja.periodoLiquidacion as PeriodoLiquidacion;
+  offsetLiquidacion = FILTROS_POR_DEFECTO.caja.offsetLiquidacion;
   readonly periodosLiquidacion: PeriodoLiquidacion[] = ['hoy', 'semana', 'mes'];
   mostrarHistorialLiquidacion = false;
   grupoHistorialLiquidacion: 'semanal' | 'mensual' = 'semanal';
@@ -95,22 +95,9 @@ export class CajaComponent implements OnInit, OnDestroy {
   Math = Math;
 
   ngOnInit(): void {
-    this.paginaFardos = 1;
+    limpiarFiltrosModulo('caja');
+    aplicarFiltrosPorDefecto(this, 'caja');
     this.fechaHoy();
-    this.filtro = leerFiltro('caja_filtro', this.filtrosValidos, 'hoy');
-
-    const desdeGuardado = leerValorFiltro('caja_desde');
-    const hastaGuardado = leerValorFiltro('caja_hasta');
-    if (this.esFecha(desdeGuardado) && this.esFecha(hastaGuardado) && desdeGuardado <= hastaGuardado) {
-      this.desde = desdeGuardado;
-      this.hasta = hastaGuardado;
-    }
-
-    this.chartTab = leerPreferencia('caja_chart_tab', ['dia', 'semana', 'mes'], 'dia');
-    this.periodoLiquidacion = leerPreferencia('caja_periodo_liquidacion', this.periodosLiquidacion, 'hoy') as PeriodoLiquidacion;
-
-    const vista = localStorage.getItem('caja_vista_fardos');
-    if (vista === 'lista' || vista === 'tarjetas') this.vistaFardos = vista;
 
     this.sincronizarFiltro();
     this.cargar();
@@ -170,11 +157,11 @@ export class CajaComponent implements OnInit, OnDestroy {
         this.paginaFardos = 1;
         this.aplicarPaginacionVentas(res.data);
       },
-      error: () => {
+      error: (e) => {
         if (inicial) {
-          this.error = 'No se pudo cargar la información de Caja. Intenta de nuevo.';
+          this.error = mensajeError(e, 'No se pudo cargar la información de Caja. Intenta de nuevo.');
         } else {
-          this.errorFiltro = 'No se pudieron actualizar los datos de Caja. Intenta de nuevo.';
+          this.errorFiltro = mensajeError(e, 'No se pudieron actualizar los datos de Caja. Intenta de nuevo.');
         }
       },
       finalizar: () => {
@@ -198,8 +185,8 @@ export class CajaComponent implements OnInit, OnDestroy {
         this.periodo = res.data;
         this.aplicarPaginacionVentas(res.data);
       },
-      error: () => {
-        this.errorFiltro = 'No se pudieron actualizar los datos de Caja. Intenta de nuevo.';
+      error: (e) => {
+        this.errorFiltro = mensajeError(e, 'No se pudieron actualizar los datos de Caja. Intenta de nuevo.');
       },
       finalizar: () => {
         this.cargandoFiltro = false;
@@ -674,14 +661,14 @@ export class CajaComponent implements OnInit, OnDestroy {
         this.mostrarMensaje(res.message);
         this.cargar();
       },
-      error: (e) => (this.error = e.message),
+      error: (e) => (this.error = mensajeError(e)),
     });
   }
 
   verFardo(f: Fardo): void {
     this.api.getFardo(f.id).subscribe({
       next: (res) => (this.detalleFardo = res.data),
-      error: (e) => (this.error = e.message),
+      error: (e) => (this.error = mensajeError(e)),
     });
   }
 
@@ -693,7 +680,7 @@ export class CajaComponent implements OnInit, OnDestroy {
         this.mostrarMensaje(res.message);
         this.cargar();
       },
-      error: (e) => (this.error = e.message),
+      error: (e) => (this.error = mensajeError(e)),
     });
   }
 
@@ -704,7 +691,7 @@ export class CajaComponent implements OnInit, OnDestroy {
         this.mostrarMensaje(res.message);
         this.cargar();
       },
-      error: (e) => (this.error = e.message),
+      error: (e) => (this.error = mensajeError(e)),
     });
   }
 

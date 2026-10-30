@@ -6,6 +6,7 @@ import { ModalErrorComponent } from '../shared/modal-error.component';
 import { aplicarErrorFormulario, mensajeError } from '../utils/api-errors';
 import { validarTodo, errVisible, requerido, soloLetras, soloDigitos, maxLong, emailOk, ReglasPorCampo } from '../utils/validators';
 import { autoDismiss } from '../utils/auto-dismiss';
+import { FILTROS_POR_DEFECTO, aplicarFiltrosPorDefecto, limpiarFiltrosModulo } from '../utils/filtros';
 import { PeticionCancelable } from '../utils/peticion-cancelable';
 import { Subject, Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
@@ -18,7 +19,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 })
 export class ClientasComponent implements OnInit, OnDestroy {
   clientas: Clienta[] = [];
-  q = '';
+  q = FILTROS_POR_DEFECTO.clientas.q;
   private qSubject = new Subject<string>();
   private qSub?: Subscription;
   cargandoLista = false;
@@ -42,7 +43,7 @@ export class ClientasComponent implements OnInit, OnDestroy {
   guardando = false;
   errVisible = errVisible;
 
-  pagina = 1;
+  pagina = FILTROS_POR_DEFECTO.clientas.pagina;
   porPagina = 10;
   total = 0;
   desde = 0;
@@ -65,14 +66,8 @@ export class ClientasComponent implements OnInit, OnDestroy {
   constructor(private api: ApiService) {}
 
   ngOnInit(): void {
-    this.pagina = 1;
-    const guardados = localStorage.getItem('clientas_filtros');
-    if (guardados) {
-      try {
-        const g = JSON.parse(guardados);
-        if (g.q) this.q = g.q;
-      } catch {}
-    }
+    limpiarFiltrosModulo('clientas');
+    aplicarFiltrosPorDefecto(this, 'clientas');
 
     this.qSub = this.qSubject.pipe(debounceTime(300), distinctUntilChanged()).subscribe(() => {
       this.pagina = 1;
@@ -124,6 +119,12 @@ export class ClientasComponent implements OnInit, OnDestroy {
     this.pagina = 1;
     this.guardarFiltros();
     this.qSubject.next(this.q);
+  }
+
+  textoVacio(): string {
+    return this.q.trim()
+      ? 'No hay clientas que coincidan con la búsqueda.'
+      : 'No hay clientas registradas.';
   }
 
   cambiarPagina(p: number): void {
@@ -237,7 +238,7 @@ export class ClientasComponent implements OnInit, OnDestroy {
     this.detalle = c;
     this.api.getClienta(c.id).subscribe({
       next: (res) => (this.detalle = res.data),
-      error: (e) => (this.error = e.message),
+      error: (e) => (this.error = mensajeError(e)),
     });
   }
 
@@ -248,7 +249,7 @@ export class ClientasComponent implements OnInit, OnDestroy {
         this.mostrarMensaje(res.message);
         this.cargar();
       },
-      error: (e) => (this.error = e.message),
+      error: (e) => (this.error = mensajeError(e)),
     });
   }
 

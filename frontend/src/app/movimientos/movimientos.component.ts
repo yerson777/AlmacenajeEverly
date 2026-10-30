@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../services/api.service';
 import { Movimiento } from '../models/models';
-import { guardarFiltro, leerFiltro } from '../utils/filtros';
+import { FILTROS_POR_DEFECTO, aplicarFiltrosPorDefecto, guardarFiltro, limpiarFiltrosModulo } from '../utils/filtros';
 import { mensajeError } from '../utils/api-errors';
 import { PeticionCancelable } from '../utils/peticion-cancelable';
 import { Subject, Subscription } from 'rxjs';
@@ -22,11 +22,11 @@ export class MovimientosComponent implements OnInit, OnDestroy {
   error = '';
   cargandoLista = true;
   private readonly peticionLista = new PeticionCancelable();
-  q = '';
+  q = FILTROS_POR_DEFECTO.movimientos.q;
   private qSubject = new Subject<string>();
   private qSub?: Subscription;
-  filtroTipo: FiltroMovimiento = '';
-  pagina = 1;
+  filtroTipo: FiltroMovimiento = FILTROS_POR_DEFECTO.movimientos.filtroTipo as FiltroMovimiento;
+  pagina = FILTROS_POR_DEFECTO.movimientos.pagina;
   porPagina = 10;
   total = 0;
   desde = 0;
@@ -37,7 +37,8 @@ export class MovimientosComponent implements OnInit, OnDestroy {
   constructor(private api: ApiService) {}
 
   ngOnInit(): void {
-    this.filtroTipo = leerFiltro('movimientos_filtro', this.filtrosValidos, '');
+    limpiarFiltrosModulo('movimientos');
+    aplicarFiltrosPorDefecto(this, 'movimientos');
     guardarFiltro('movimientos_filtro', this.filtroTipo);
 
     this.qSub = this.qSubject.pipe(debounceTime(300), distinctUntilChanged()).subscribe(() => {
@@ -103,6 +104,14 @@ export class MovimientosComponent implements OnInit, OnDestroy {
     this.pagina = 1;
     guardarFiltro('movimientos_filtro', '');
     this.cargar();
+  }
+
+  textoVacio(): string {
+    if (this.q.trim()) return 'No hay movimientos que coincidan con la búsqueda.';
+    if (this.filtroTipo === 'Almacenada') return 'No hay movimientos de almacenamiento.';
+    if (this.filtroTipo === 'Entregada') return 'No hay movimientos de entrega.';
+    if (this.filtroTipo === 'Movida') return 'No hay movimientos de traslado.';
+    return 'No hay movimientos registrados.';
   }
 
   cambiarPagina(p: number): void {

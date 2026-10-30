@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { ApiService } from '../services/api.service';
 import { Usuario } from '../models/models';
 import { ModalErrorComponent } from '../shared/modal-error.component';
-import { aplicarErrorFormulario } from '../utils/api-errors';
+import { aplicarErrorFormulario, mensajeError } from '../utils/api-errors';
 import { validarTodo, errVisible, requerido, emailOk, maxLong, minLong, Validator, ReglasPorCampo } from '../utils/validators';
 import { autoDismiss } from '../utils/auto-dismiss';
 
@@ -84,7 +84,7 @@ export class UsuariosComponent implements OnInit {
   cargar(): void {
     this.api.getUsuarios().subscribe({
       next: (res) => (this.usuarios = res.data),
-      error: (e) => (this.error = e.message),
+      error: (e) => (this.error = mensajeError(e)),
     });
   }
 
@@ -203,7 +203,7 @@ export class UsuariosComponent implements OnInit {
         this.mostrarMensaje(res.message);
         this.cargar();
       },
-      error: (e) => (this.error = e.message),
+      error: (e) => (this.error = mensajeError(e)),
     });
   }
 
